@@ -8,6 +8,7 @@ import { useRequests } from './useRequests'
 import { pushToast } from './useUi'
 import { useI18n } from './useI18n'
 import { maxPhotosForPlan, maxCategoriesForPlan } from '../lib/planLimits'
+import { currencyForLang, formatPlanPrice, type PlanCurrency } from '../lib/pricing'
 
 const plans = ref<Plan[]>([])
 
@@ -109,28 +110,37 @@ const PLAN_LABELS = computed<Record<string, string>>(() => {
 })
 
 // Preço de fallback (seed) usado quando a tabela plans ainda não tem a linha
-const PLAN_FALLBACK_PRICES: Record<string, string> = {
-  gratuito: 'R$0',
-  bronze: 'R$34,90',
-  prata: 'R$54,90',
-  ouro: 'R$79,90',
+const PLAN_FALLBACK_CENTS: Record<PlanCurrency, Record<string, number>> = {
+  BRL: { gratuito: 0, bronze: 3490, prata: 5490, ouro: 4990 },
+  USD: { gratuito: 0, bronze: 600, prata: 1000, ouro: 9990 },
 }
 
-// Preços exibidos vêm de plans.monthly_price (fonte única); fallback = valor do seed
-function formatBRL(cents: number | null | undefined, fallback: string): string {
-  if (cents === null || cents === undefined) return fallback
-  if (cents === 0) return 'R$0'
-  return `R$${(cents / 100).toFixed(2).replace('.', ',')}`
-}
-function dbPlanPrice(id: string, fallback: string): string {
+// Assinatura existente manda; caso contrário, o idioma define a moeda.
+const planCurrency = computed<PlanCurrency>(() => {
+  const { lang } = useI18n()
+  const { proProfile } = useAuth()
+  const hasActiveSubscription = !!proProfile.value.stripe_subscription_id
+    && (proProfile.value.plan_status === 'active' || proProfile.value.plan_status === 'past_due')
+  return currencyForLang(
+    lang.value,
+    hasActiveSubscription ? proProfile.value.billing_currency : null,
+  )
+})
+
+function dbPlanPrice(id: string): string {
+  const { lang } = useI18n()
   const row = planMap.value.get(id)
-  return row ? formatBRL(row.monthly_price, fallback) : fallback
+  const currency = planCurrency.value
+  const cents = row
+    ? (currency === 'USD' ? row.monthly_price_usd : row.monthly_price)
+    : (PLAN_FALLBACK_CENTS[currency][id] ?? 0)
+  return formatPlanPrice(cents, currency, lang.value)
 }
 const PLAN_PRICES = computed<Record<string, string>>(() => ({
-  gratuito: dbPlanPrice('gratuito', PLAN_FALLBACK_PRICES.gratuito),
-  bronze: dbPlanPrice('bronze', PLAN_FALLBACK_PRICES.bronze),
-  prata: dbPlanPrice('prata', PLAN_FALLBACK_PRICES.prata),
-  ouro: dbPlanPrice('ouro', PLAN_FALLBACK_PRICES.ouro),
+  gratuito: dbPlanPrice('gratuito'),
+  bronze: dbPlanPrice('bronze'),
+  prata: dbPlanPrice('prata'),
+  ouro: dbPlanPrice('ouro'),
 }))
 
 // Limite da feature ("N pedidos por mês" / "Pedidos ilimitados") lido do banco.
@@ -158,7 +168,7 @@ const displayPlans = computed(() => {
     name: t(p.nameKey),
     tagline: t(p.taglineKey),
     cta: t(p.ctaKey),
-    price: dbPlanPrice(p.id, PLAN_FALLBACK_PRICES[p.id] ?? 'R$0'),
+    price: dbPlanPrice(p.id),
     features: p.featureKeys.map((f) => withDbLimit(p.id, f, t)),
   }))
 })
@@ -182,6 +192,12 @@ async function subscribePlan(targetPlan: string) {
       return
     }
     if (proProfile.value.plan === targetPlan) return
+    const currency = planCurrency.value
+    const row = planMap.value.get(targetPlan)
+    if (currency === 'USD' && row && !row.stripe_price_id_usd) {
+      pushToast('warning', t('toasts.usdNotConfigured'))
+      return
+    }
     const hasActiveSubscription = !!proProfile.value.stripe_subscription_id && proProfile.value.plan_status === 'active'
     if (hasActiveSubscription) {
       await changePlan(proProfile.value.id, targetPlan)
@@ -199,11 +215,16 @@ async function subscribePlan(targetPlan: string) {
       goToTab('perfil_pro')
       return
     }
-    const { url } = await createCheckoutSession(proProfile.value.id, targetPlan, proProfile.value.email)
+    const { url } = await createCheckoutSession(proProfile.value.id, targetPlan, proProfile.value.email, currency)
     if (url) window.location.href = url
   } catch (err) {
     console.error('Erro ao assinar plano:', err)
-    pushToast('error', t('toasts.subscribeError'))
+    const message = err instanceof Error ? err.message : ''
+    if (message.includes('PRICE_NOT_CONFIGURED:USD')) {
+      pushToast('warning', t('toasts.usdNotConfigured'))
+    } else {
+      pushToast('error', t('toasts.subscribeError'))
+    }
   }
 }
 
@@ -223,10 +244,10 @@ async function handleOpenPortal() {
 export function usePlans() {
   return {
     plans, planMap,
-    PLANS, PLAN_LABELS, displayPlans, PLAN_PRICES,
+    PLANS, PLAN_LABELS, displayPlans, PLAN_PRICES, planCurrency,
     planFeatures, requestUsage, canReceiveRequests, currentPlanRow, upgradeRecommendation,
     hasFeature,
-    formatBRL, dbPlanPrice, planLimitText,
+    dbPlanPrice, planLimitText,
     subscribePlan, handleOpenPortal,
   }
 }

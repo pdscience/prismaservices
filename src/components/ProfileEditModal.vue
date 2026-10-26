@@ -211,6 +211,7 @@ async function handleSave() {
           reviews_count: 0,
           plan: 'gratuito',
           plan_status: 'active',
+          billing_currency: 'BRL',
           stripe_customer_id: null,
           stripe_subscription_id: null,
           plan_expires_at: null,

@@ -21,9 +21,11 @@ import {
   CheckSquare,
   ChevronDown,
   FileText,
+  Hammer,
   Handshake,
   MessageCircle,
   MessageSquare,
+  Paintbrush,
   ShieldCheck,
   Smartphone,
   Sparkles,
@@ -37,7 +39,7 @@ import {
 
 const { isLanding } = useAuth()
 const route = useRoute()
-const { t, categoryText, planText } = useI18n()
+const { t, lang, categoryText, planText } = useI18n()
 const {
   activeTab, activeSection, teslaSections,
   goToTab, goToModule, scrollToId, trackCta,
@@ -51,6 +53,7 @@ const contactForm = ref({
   name: '',
   email: '',
   phone: '',
+  zip: '',
   category: '',
   categoryOther: '',
   subject: '',
@@ -73,7 +76,7 @@ function clearContactCategory(): void {
 
 const handleContactSubmit = () => {
   contactSubmitting.value = true
-  const { name, email, phone, category, subject, message } = contactForm.value
+  const { name, email, phone, zip, category, subject, message } = contactForm.value
   const isUnlisted = category === CATEGORY_UNLISTED
   const categoryLine = isUnlisted
     ? `${t('landing.waCategoria')}: ${contactForm.value.categoryOther} (${t('landing.waCategoriaSugerida')})`
@@ -85,6 +88,7 @@ const handleContactSubmit = () => {
     `${t('landing.waNome')}: ${name}`,
     `${t('landing.waEmail')}: ${email}`,
     phone ? `${t('landing.waTelefone')}: ${phone}` : '',
+    zip ? `${t('landing.zipCode')}: ${zip}` : '',
     categoryLine,
     subject ? `${t('landing.waAssunto')}: ${subject}` : '',
     ``,
@@ -99,7 +103,7 @@ const handleContactSubmit = () => {
   setTimeout(() => {
     contactSubmitting.value = false
     contactSuccess.value = true
-    contactForm.value = { name: '', email: '', phone: '', category: '', categoryOther: '', subject: '', message: '' }
+    contactForm.value = { name: '', email: '', phone: '', zip: '', category: '', categoryOther: '', subject: '', message: '' }
     landingCategory.value = ''
     setTimeout(() => { contactSuccess.value = false }, 6000)
   }, 500)
@@ -114,11 +118,47 @@ const faqs = computed(() => [
   { q: t('landing.faq3Q'), a: t('landing.faq3A') },
   {
     q: t('landing.faq4Q'),
-    a: `${planText('gratuito')} (${dbPlanPrice('gratuito', 'R$0')}): ${t('plans.featureFreeProfile')}. ${planText('ouro')} (${dbPlanPrice('ouro', 'R$79,90')}): ${t('plans.featureUnlimitedOrders')}, ${t('plans.featureHighlight')}, ${t('plans.featureVerifiedBadge')} e ${t('plans.featureAdvancedStats')}.`,
+    a: `${planText('gratuito')} (${dbPlanPrice('gratuito')}): ${t('plans.featureFreeProfile')}. ${planText('ouro')} (${dbPlanPrice('ouro')}): ${t('plans.featureUnlimitedOrders')}, ${t('plans.featureHighlight')}, ${t('plans.featureVerifiedBadge')} e ${t('plans.featureAdvancedStats')}.`,
   },
   { q: t('landing.faq5Q'), a: t('landing.faq5A') },
 ])
-const partnerLogos = ['Eletricistas PRO', 'Hidráulica Prime', 'Pinturas & Cia', 'ClimaFrio', 'Marcenaria Alto Padrão', 'Reforma Fácil', 'Chave Ouro 24h', 'Limpa Total']
+const partnerLogos = computed(() => lang.value === 'en'
+  ? ['Pro Electric Co.', 'Prime Plumbing', 'Paint & Co.', 'CoolAir', 'Custom Carpentry', 'Easy Renovation', 'Gold Key 24h', 'Total Clean']
+  : ['Eletricistas PRO', 'Hidráulica Prime', 'Pinturas & Cia', 'ClimaFrio', 'Marcenaria Alto Padrão', 'Reforma Fácil', 'Chave Ouro 24h', 'Limpa Total'])
+
+const usServices = computed(() => [
+  {
+    icon: Sparkles,
+    title: t('landing.usSvcCleaning'),
+    desc: t('landing.usSvcCleaningDesc'),
+    category: 'Limpeza Geral',
+  },
+  {
+    icon: Hammer,
+    title: t('landing.usSvcHandyman'),
+    desc: t('landing.usSvcHandymanDesc'),
+    category: 'Marido de Aluguel',
+  },
+  {
+    icon: Paintbrush,
+    title: t('landing.usSvcPainting'),
+    desc: t('landing.usSvcPaintingDesc'),
+    category: 'Pintor',
+  },
+])
+
+const usTrust = computed(() => [
+  { icon: BadgeCheck, title: t('landing.usTrustVerified'), desc: t('landing.usTrustVerifiedDesc') },
+  { icon: FileText, title: t('landing.usTrustEstimates'), desc: t('landing.usTrustEstimatesDesc') },
+  { icon: CheckCircle2, title: t('landing.usTrustNoObligation'), desc: t('landing.usTrustNoObligationDesc') },
+  { icon: Star, title: t('landing.usTrustReviews'), desc: t('landing.usTrustReviewsDesc') },
+])
+
+function startUsService(category: string) {
+  trackCta('us_service_' + category)
+  selectedCategory.value = category
+  goToModule('client', 'register')
+}
 
 function handleTilt(e: MouseEvent) {
   const el = e.currentTarget as HTMLElement | null
@@ -241,6 +281,44 @@ onUnmounted(() => {
           <button @click="trackCta('hero_pro'); goToModule('pro', 'register')" class="tesla-cta-secondary flex-1 px-8 py-2.5 rounded-full text-[14px] font-medium">{{ t('landing.ctaPro') }}</button>
         </div>
         <p class="mt-4 text-[14px] text-slate-300/60">{{ t('landing.heroBadges') }}</p>
+      </div>
+    </section>
+
+    <!-- OUR SERVICES (US market) -->
+    <section v-if="lang === 'en'" id="our-services" class="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-14 scroll-mt-24">
+      <div class="gs-reveal text-center space-y-2 mb-6">
+        <h3 class="text-xl sm:text-2xl font-extrabold text-white">{{ t('landing.usServicesTitle') }}</h3>
+        <p class="text-xs sm:text-sm text-slate-400">{{ t('landing.usServicesSubtitle') }}</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div v-for="svc in usServices" :key="svc.category" class="glass group rounded-3xl p-6 border border-slate-800 hover:border-amber-500/40 hover:-translate-y-1 transition-all duration-300">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/25 to-yellow-400/15 text-amber-400 flex items-center justify-center border border-amber-500/25 group-hover:scale-110 transition-transform">
+            <component :is="svc.icon" class="w-6 h-6" />
+          </div>
+          <h4 class="mt-4 font-bold text-white text-base">{{ svc.title }}</h4>
+          <p class="mt-2 text-xs text-slate-400 leading-relaxed">{{ svc.desc }}</p>
+          <button @click="startUsService(svc.category)" class="mt-5 inline-flex items-center gap-1.5 text-xs font-bold text-amber-300 hover:text-amber-200">
+            {{ t('landing.usSvcCta') }} <ArrowRight class="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TRUST FACTORS (US market) -->
+    <section v-if="lang === 'en'" class="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-10">
+      <div class="gs-reveal glass rounded-3xl p-6 sm:p-8 border border-slate-800">
+        <h3 class="text-center text-lg sm:text-xl font-extrabold text-white">{{ t('landing.usTrustTitle') }}</h3>
+        <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div v-for="trust in usTrust" :key="trust.title" class="flex items-start gap-3">
+            <div class="w-9 h-9 shrink-0 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 flex items-center justify-center">
+              <component :is="trust.icon" class="w-4 h-4" />
+            </div>
+            <div>
+              <p class="text-xs font-bold text-white">{{ trust.title }}</p>
+              <p class="mt-1 text-[11px] text-slate-400 leading-relaxed">{{ trust.desc }}</p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -408,7 +486,7 @@ onUnmounted(() => {
       <div class="space-y-5">
         <h3 class="text-2xl sm:text-3xl font-black text-white tracking-tight">{{ t('landing.cliqueAoRecibo') }}</h3>
         <p class="text-sm text-slate-300 leading-relaxed">{{ t('landing.fluxoResumo') }}</p>
-        <div class="grid grid-cols-3 gap-4">
+        <div v-if="lang !== 'en'" class="grid grid-cols-3 gap-4">
           <div class="text-center"><div class="text-2xl sm:text-3xl font-black text-amber-300" data-count="200" data-suffix="+">0</div><div class="text-[11px] text-slate-400 mt-1">{{ t('landing.statProfissionais') }}</div></div>
           <div class="text-center"><div class="text-2xl sm:text-3xl font-black text-amber-300" data-count="49" data-suffix="">0</div><div class="text-[11px] text-slate-400 mt-1">{{ t('landing.statNota') }}</div></div>
           <div class="text-center"><div class="text-2xl sm:text-3xl font-black text-amber-300" data-count="24" data-suffix="h">0</div><div class="text-[11px] text-slate-400 mt-1">{{ t('landing.statResposta') }}</div></div>
@@ -460,8 +538,8 @@ onUnmounted(() => {
           <p class="tesla-title text-white text-[28px] sm:text-[36px] leading-tight mt-4">{{ t('landing.recebaChamados') }}</p>
           <p class="mt-3 text-[14px] text-slate-300 max-w-md">{{ t('landing.recebaChamadosDesc') }}</p>
           <div class="mt-5 flex flex-wrap gap-2 text-[12px] font-medium">
-            <span class="px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-200">{{ planText('gratuito') }} {{ dbPlanPrice('gratuito', 'R$0') }}</span>
-            <span class="px-4 py-1.5 rounded-full bg-amber-500 text-slate-950">{{ planText('ouro') }} {{ dbPlanPrice('ouro', 'R$79,90') }}</span>
+            <span class="px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-200">{{ planText('gratuito') }} {{ dbPlanPrice('gratuito') }}</span>
+            <span class="px-4 py-1.5 rounded-full bg-amber-500 text-slate-950">{{ planText('ouro') }} {{ dbPlanPrice('ouro') }}</span>
           </div>
           <div class="mt-6 flex flex-col sm:flex-row gap-3">
             <button @click="trackCta('pro_cadastrar'); goToModule('pro','register')" class="tesla-cta-primary px-8 py-2.5 rounded-full text-[14px] font-medium">{{ t('landing.cadastrarProfissional') }}</button>
@@ -506,45 +584,46 @@ onUnmounted(() => {
       <form @submit.prevent="handleContactSubmit" class="bg-slate-950/70 p-5 sm:p-8 space-y-4 border-t lg:border-t-0 lg:border-l border-white/10">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input v-model="contactForm.name" required :placeholder="t('auth.seuNome') + ' *'" class="bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 transition-all" />
-          <input v-model="contactForm.phone" placeholder="WhatsApp (11) 99999-9999" class="bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 transition-all" />
+          <input v-model="contactForm.phone" :placeholder="t('landing.phonePlaceholder')" class="bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 transition-all" />
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input v-model="contactForm.email" type="email" required :placeholder="t('auth.emailPlaceholder') + ' *'" class="bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 transition-all" />
-          <div class="space-y-1.5">
-            <label class="block text-[11px] text-slate-400 font-medium">{{ t('auth.categoria') }}</label>
-            <div v-if="contactCategory" class="flex items-center gap-2">
-              <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm font-semibold">
-                {{ categoryText(contactCategory) }}
-                <button type="button" @click="clearContactCategory" :aria-label="t('common.close')" class="hover:text-white transition-colors">
-                  <X class="w-3.5 h-3.5" />
-                </button>
-              </span>
-            </div>
-            <div v-else-if="contactUnlisted" class="flex items-center gap-2">
-              <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm font-semibold">
-                {{ contactForm.categoryOther || t('landing.servicoNaoLista') }}
-                <button type="button" @click="clearContactCategory" :aria-label="t('common.close')" class="hover:text-white transition-colors">
-                  <X class="w-3.5 h-3.5" />
-                </button>
-              </span>
-            </div>
-            <button
-              v-else
-              type="button"
-              @click="scrollToId('categorias')"
-              class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:border-emerald-500/40 transition-all text-left"
-            >
-              {{ t('landing.escolhaServicoAcima') }}
-            </button>
-            <button
-              v-if="!contactCategory && !contactUnlisted"
-              type="button"
-              @click="contactForm.category = CATEGORY_UNLISTED"
-              class="text-[11px] text-slate-500 hover:text-emerald-300 underline transition-colors"
-            >
-              {{ t('landing.servicoNaoLista') }}
-            </button>
+          <input v-model="contactForm.zip" :required="lang === 'en'" :placeholder="t('landing.zipCode') + (lang === 'en' ? ' *' : '')" inputmode="numeric" autocomplete="postal-code" class="bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 transition-all" />
+        </div>
+        <div class="space-y-1.5">
+          <label class="block text-[11px] text-slate-400 font-medium">{{ t('auth.categoria') }}</label>
+          <div v-if="contactCategory" class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm font-semibold">
+              {{ categoryText(contactCategory) }}
+              <button type="button" @click="clearContactCategory" :aria-label="t('common.close')" class="hover:text-white transition-colors">
+                <X class="w-3.5 h-3.5" />
+              </button>
+            </span>
           </div>
+          <div v-else-if="contactUnlisted" class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm font-semibold">
+              {{ contactForm.categoryOther || t('landing.servicoNaoLista') }}
+              <button type="button" @click="clearContactCategory" :aria-label="t('common.close')" class="hover:text-white transition-colors">
+                <X class="w-3.5 h-3.5" />
+              </button>
+            </span>
+          </div>
+          <button
+            v-else
+            type="button"
+            @click="scrollToId('categorias')"
+            class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-400 hover:text-white hover:border-emerald-500/40 transition-all text-left"
+          >
+            {{ t('landing.escolhaServicoAcima') }}
+          </button>
+          <button
+            v-if="!contactCategory && !contactUnlisted"
+            type="button"
+            @click="contactForm.category = CATEGORY_UNLISTED"
+            class="text-[11px] text-slate-500 hover:text-emerald-300 underline transition-colors"
+          >
+            {{ t('landing.servicoNaoLista') }}
+          </button>
         </div>
         <div v-if="contactForm.category === CATEGORY_UNLISTED" class="space-y-1.5">
           <input v-model="contactForm.categoryOther" required :placeholder="t('landing.qualServico') + ' *'" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 transition-all" />

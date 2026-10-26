@@ -1,6 +1,7 @@
 import { insforge } from '../lib/insforge'
 import { portfolioStorageKey } from '../lib/portfolio'
 import { clampStars, type ProfessionalReview } from '../lib/reviews'
+import type { PlanCurrency } from '../lib/pricing'
 import type { AIAnalysis, Plan, Professional, Referral, ServiceRequest, User } from '../types'
 
 export async function getServiceRequests(): Promise<ServiceRequest[]> {
@@ -323,20 +324,26 @@ export async function activateTrial(professionalId: string): Promise<{ plan: str
   return data as { plan: string; expires_at: string }
 }
 
-export async function createCheckoutSession(professionalId: string, plan: string, email: string): Promise<{ url: string }> {
+export async function createCheckoutSession(
+  professionalId: string,
+  plan: string,
+  email: string,
+  currency: PlanCurrency = 'BRL',
+): Promise<{ url: string }> {
   const { data: planData, error: planError } = await insforge.database
     .from('plans')
-    .select('stripe_price_id')
+    .select('stripe_price_id, stripe_price_id_usd')
     .eq('id', plan)
     .maybeSingle()
   if (planError) throw planError
-  if (!planData?.stripe_price_id) throw new Error('Price ID not configured')
+  const priceId = currency === 'USD' ? planData?.stripe_price_id_usd : planData?.stripe_price_id
+  if (!priceId) throw new Error(`PRICE_NOT_CONFIGURED:${currency}`)
 
   const successUrl = `${window.location.origin}/?session_id={CHECKOUT_SESSION_ID}`
   const cancelUrl = `${window.location.origin}/?canceled=true`
   const { data, error } = await insforge.payments.stripe.createCheckoutSession('test', {
     mode: 'subscription',
-    lineItems: [{ priceId: planData.stripe_price_id, quantity: 1 }],
+    lineItems: [{ priceId, quantity: 1 }],
     successUrl,
     cancelUrl,
     subject: { type: 'professional', id: professionalId },

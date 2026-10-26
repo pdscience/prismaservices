@@ -54,7 +54,7 @@ const logoUrl = '/logo_casa.png'
             <img :src="logoUrl" alt="Casa Obras e Reparos" class="w-9 h-9 rounded-xl object-cover" />
             <h2 class="font-black text-white text-lg tracking-tight">
               {{ authView === 'login' ? t('auth.entrar') : t('auth.criarConta') }}
-              <span class="block text-[11px] font-medium text-slate-400">Casa Obras e Reparos</span>
+              <span class="block text-[11px] font-medium text-slate-400">Prisma Services e Repair</span>
             </h2>
           </div>
           <button @click="showAuth = false" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-all">

@@ -28,11 +28,11 @@ const logoUrl = '/logo_casa.png'
   <div class="max-w-[1383px] mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
     <div class="flex items-center gap-3">
       <div class="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center shadow-lg">
-        <img :src="logoUrl" alt="Casa Obras e Reparos" class="w-10 h-10 rounded-xl object-cover" />
+        <img :src="logoUrl" alt="Prisma Services e Repair" class="w-10 h-10 rounded-xl object-cover" />
       </div>
       <div>
         <h1 class="font-extrabold text-lg text-white tracking-tight flex items-center gap-2">
-          Casa Obras e Reparos
+          Prisma Services e Repair
         </h1>
         <p class="text-xs text-slate-400 hidden sm:block">
           

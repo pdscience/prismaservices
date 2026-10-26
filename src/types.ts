@@ -43,6 +43,7 @@ export interface Professional {
   phone_country_code: string
   plan: 'gratuito' | 'bronze' | 'prata' | 'ouro'
   plan_status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'unpaid'
+  billing_currency: 'BRL' | 'USD'
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   plan_expires_at: string | null
@@ -93,6 +94,8 @@ export interface Plan {
   display_name: string
   rank: number
   monthly_price: number
+  monthly_price_usd: number
+  stripe_price_id_usd: string | null
   request_limit: number | null
   max_photos: number
   max_categories: number | null
