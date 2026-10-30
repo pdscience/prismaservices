@@ -8,7 +8,7 @@ import { useRequests } from './useRequests'
 import { pushToast } from './useUi'
 import { useI18n } from './useI18n'
 import { maxPhotosForPlan, maxCategoriesForPlan } from '../lib/planLimits'
-import { currencyForLang, formatPlanPrice, type PlanCurrency } from '../lib/pricing'
+import { currencyForLang, formatPlanPrice, stripeEnvironment, type PlanCurrency } from '../lib/pricing'
 
 const plans = ref<Plan[]>([])
 
@@ -233,7 +233,7 @@ async function handleOpenPortal() {
   const { t } = useI18n()
   try {
     if (!proProfile.value.id) return
-    const { url } = await createPortalSession(proProfile.value.id)
+    const { url } = await createPortalSession(proProfile.value.id, stripeEnvironment())
     if (url) window.location.href = url
   } catch (err) {
     console.error('Erro ao abrir portal de assinatura:', err)

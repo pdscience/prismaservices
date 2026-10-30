@@ -1,7 +1,7 @@
 import { insforge } from '../lib/insforge'
 import { portfolioStorageKey } from '../lib/portfolio'
 import { clampStars, type ProfessionalReview } from '../lib/reviews'
-import type { PlanCurrency } from '../lib/pricing'
+import type { PlanCurrency, PlanPrice, StripeEnvironment } from '../lib/pricing'
 import type { AIAnalysis, Plan, Professional, Referral, ServiceRequest, User } from '../types'
 
 export async function getServiceRequests(): Promise<ServiceRequest[]> {
@@ -297,9 +297,12 @@ export async function analyzeWithAI(imageBase64: string | undefined, category: s
   return data as AnalyzeResponse
 }
 
-export async function createPortalSession(professionalId: string): Promise<{ url: string }> {
+export async function createPortalSession(
+  professionalId: string,
+  environment: StripeEnvironment,
+): Promise<{ url: string }> {
   const returnUrl = `${window.location.origin}/perfil_pro`
-  const { data, error } = await insforge.payments.stripe.createCustomerPortalSession('test', {
+  const { data, error } = await insforge.payments.stripe.createCustomerPortalSession(environment, {
     subject: { type: 'professional', id: professionalId },
     returnUrl,
   })
@@ -329,19 +332,22 @@ export async function createCheckoutSession(
   plan: string,
   email: string,
   currency: PlanCurrency = 'BRL',
+  environment: StripeEnvironment = 'test',
 ): Promise<{ url: string }> {
-  const { data: planData, error: planError } = await insforge.database
-    .from('plans')
-    .select('stripe_price_id, stripe_price_id_usd')
-    .eq('id', plan)
+  const { data: planPrice, error: priceError } = await insforge.database
+    .from('plan_prices')
+    .select('plan_id, environment, currency, stripe_price_id, unit_amount')
+    .eq('plan_id', plan)
+    .eq('environment', environment)
+    .eq('currency', currency)
     .maybeSingle()
-  if (planError) throw planError
-  const priceId = currency === 'USD' ? planData?.stripe_price_id_usd : planData?.stripe_price_id
-  if (!priceId) throw new Error(`PRICE_NOT_CONFIGURED:${currency}`)
+  if (priceError) throw priceError
+  const priceId = (planPrice as PlanPrice | null)?.stripe_price_id
+  if (!priceId) throw new Error(`PRICE_NOT_CONFIGURED:${currency}:${environment}`)
 
   const successUrl = `${window.location.origin}/?session_id={CHECKOUT_SESSION_ID}`
   const cancelUrl = `${window.location.origin}/?canceled=true`
-  const { data, error } = await insforge.payments.stripe.createCheckoutSession('test', {
+  const { data, error } = await insforge.payments.stripe.createCheckoutSession(environment, {
     mode: 'subscription',
     lineItems: [{ priceId, quantity: 1 }],
     successUrl,
