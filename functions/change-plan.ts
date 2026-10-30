@@ -51,18 +51,9 @@ export default async function (req: Request): Promise<Response> {
     })
   }
 
-  const secretKey = Deno.env.get('STRIPE_TEST_SECRET_KEY')
-  if (!secretKey) {
-    return new Response(JSON.stringify({ error: 'Stripe not configured' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-  const stripe = new Stripe(secretKey)
-
   const { data: proData, error: proError } = await client.database
     .from('professionals')
-    .select('stripe_subscription_id,plan,auth_id')
+    .select('stripe_subscription_id,plan,auth_id,billing_environment')
     .eq('id', professionalId)
     .maybeSingle()
   if (proError || !proData) {
@@ -84,17 +75,17 @@ export default async function (req: Request): Promise<Response> {
     })
   }
 
-  const { data: planData, error: planError } = await client.database
-    .from('plans')
-    .select('stripe_price_id, stripe_price_id_usd')
-    .eq('id', targetPlan)
-    .maybeSingle()
-  if (planError) {
-    return new Response(JSON.stringify({ error: 'Plan not found' }), {
+  const environment = proData.billing_environment === 'live' ? 'live' : 'test'
+  const secretKey = environment === 'live'
+    ? Deno.env.get('STRIPE_LIVE_SECRET_KEY')
+    : Deno.env.get('STRIPE_TEST_SECRET_KEY')
+  if (!secretKey) {
+    return new Response(JSON.stringify({ error: 'Stripe not configured' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
+  const stripe = new Stripe(secretKey)
 
   // Lê os itens atuais para TROCAR o preço (semântica de substituição).
   // Sem o `id` do item existente, o Stripe ADICIONA um segundo item (cobrança
@@ -120,9 +111,22 @@ export default async function (req: Request): Promise<Response> {
   // A moeda da assinatura não muda no meio do contrato: usa o Price ID da
   // mesma moeda cobrada hoje, nunca a moeda do idioma atual.
   const billingCurrency = currentItems[0]?.currency === 'USD' ? 'USD' : 'BRL'
-  const priceId = billingCurrency === 'USD' ? planData?.stripe_price_id_usd : planData?.stripe_price_id
+  const { data: priceData, error: priceError } = await client.database
+    .from('plan_prices')
+    .select('stripe_price_id')
+    .eq('plan_id', targetPlan)
+    .eq('environment', environment)
+    .eq('currency', billingCurrency)
+    .maybeSingle()
+  if (priceError) {
+    return new Response(JSON.stringify({ error: 'Plan price not found' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+  const priceId = priceData?.stripe_price_id
   if (!priceId) {
-    return new Response(JSON.stringify({ error: `Price ID ${billingCurrency} not configured` }), {
+    return new Response(JSON.stringify({ error: `Price ID ${billingCurrency} not configured for ${environment}` }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
@@ -132,7 +136,7 @@ export default async function (req: Request): Promise<Response> {
   if (currentItems.length === 1 && currentItems[0].priceId === priceId) {
     await client.database
       .from('professionals')
-      .update({ plan: targetPlan, billing_currency: billingCurrency })
+      .update({ plan: targetPlan, billing_currency: billingCurrency, billing_environment: environment })
       .eq('id', professionalId)
     return new Response(JSON.stringify({ subscriptionId: proData.stripe_subscription_id, status: currentStatus }), {
       status: 200,
@@ -152,7 +156,7 @@ export default async function (req: Request): Promise<Response> {
     })
     await client.database
       .from('professionals')
-      .update({ plan: targetPlan, billing_currency: billingCurrency })
+      .update({ plan: targetPlan, billing_currency: billingCurrency, billing_environment: environment })
       .eq('id', professionalId)
     return new Response(JSON.stringify({ subscriptionId: subscription.id, status: subscription.status }), {
       status: 200,
