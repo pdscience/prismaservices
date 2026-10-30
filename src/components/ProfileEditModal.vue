@@ -8,6 +8,7 @@ import { usePlans } from '../composables/usePlans'
 import { useI18n } from '../composables/useI18n'
 import { canAddCategory, isOverCategoryLimit } from '../lib/planLimits'
 import { dialOf } from '../lib/geo'
+import { currencyForCountry, stripeEnvironment } from '../lib/pricing'
 import { countryFromE164, validateE164 } from '../lib/phone'
 import AddressFields from './AddressFields.vue'
 import PhoneInput from './PhoneInput.vue'
@@ -211,7 +212,8 @@ async function handleSave() {
           reviews_count: 0,
           plan: 'gratuito',
           plan_status: 'active',
-          billing_currency: 'BRL',
+          billing_currency: currencyForCountry(proCountryCode.value),
+          billing_environment: stripeEnvironment(),
           stripe_customer_id: null,
           stripe_subscription_id: null,
           plan_expires_at: null,

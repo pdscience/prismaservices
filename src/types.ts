@@ -1,3 +1,5 @@
+import type { StripeEnvironment } from './lib/pricing'
+
 export interface AIAnalysis {
   summary: string
   description: string
@@ -44,6 +46,7 @@ export interface Professional {
   plan: 'gratuito' | 'bronze' | 'prata' | 'ouro'
   plan_status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'unpaid'
   billing_currency: 'BRL' | 'USD'
+  billing_environment: StripeEnvironment
   stripe_customer_id: string | null
   stripe_subscription_id: string | null
   plan_expires_at: string | null

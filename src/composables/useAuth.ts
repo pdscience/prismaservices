@@ -16,6 +16,7 @@ import { useUi, pushToast } from './useUi'
 import { useProfessionals } from './useProfessionals'
 import { useI18n } from './useI18n'
 import { dialOf } from '../lib/geo'
+import { currencyForCountry, stripeEnvironment } from '../lib/pricing'
 
 const proProfile = ref<Professional>({
   id: '',
@@ -40,6 +41,7 @@ const proProfile = ref<Professional>({
   plan: 'gratuito',
   plan_status: 'active',
   billing_currency: 'BRL',
+  billing_environment: stripeEnvironment(),
   stripe_customer_id: null,
   stripe_subscription_id: null,
   plan_expires_at: null,
@@ -223,7 +225,8 @@ async function handleRegister() {
         municipality: registerForm.value.municipality.trim(),
         plan: 'gratuito',
         plan_status: 'active',
-        billing_currency: 'BRL',
+        billing_currency: currencyForCountry(registerForm.value.country_code),
+        billing_environment: stripeEnvironment(),
         stripe_customer_id: null,
         stripe_subscription_id: null,
         plan_expires_at: null,
@@ -288,6 +291,7 @@ async function handleLogout() {
     plan: 'gratuito',
     plan_status: 'active',
     billing_currency: 'BRL',
+    billing_environment: stripeEnvironment(),
     stripe_customer_id: null,
     stripe_subscription_id: null,
     plan_expires_at: null,
