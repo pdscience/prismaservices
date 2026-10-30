@@ -490,6 +490,9 @@ export default {
     featureLimitReached: 'Has alcanzado el límite de tu plan.',
     ctaContinueFree: 'Continuar gratis',
     ctaBackToFree: 'Cancela desde el portal para volver al plan Gratis',
+    billedInBrl: 'Cobro en R$ (Brasil)',
+    billedInUsd: 'Cobro en US$ (exterior)',
+    cardOnly: 'Tarjeta de crédito o débito',
   },
 
   modals: {
@@ -694,7 +697,7 @@ export default {
     invalidEmail: 'Registra un correo válido en tu perfil para suscribirte al plan.',
     planChanged: 'Plan cambiado a {plan}.',
     subscribeError: 'Error al suscribirse al plan. Inténtalo de nuevo.',
-    usdNotConfigured: 'El pago en dólares aún no está disponible. Inténtalo de nuevo pronto.',
+    priceNotConfigured: 'El pago en {currency} aún no está configurado en este entorno.',
     portalError: 'Error al abrir el portal de gestión de la suscripción.',
     trialActivated: '¡Prueba de 30 días del plan Premium activada!',
     trialActivateError: 'No fue posible activar la prueba. Inténtalo de nuevo.',

@@ -118,7 +118,7 @@ const faqs = computed(() => [
   { q: t('landing.faq3Q'), a: t('landing.faq3A') },
   {
     q: t('landing.faq4Q'),
-    a: `${planText('gratuito')} (${dbPlanPrice('gratuito')}): ${t('plans.featureFreeProfile')}. ${planText('ouro')} (${dbPlanPrice('ouro')}): ${t('plans.featureUnlimitedOrders')}, ${t('plans.featureHighlight')}, ${t('plans.featureVerifiedBadge')} e ${t('plans.featureAdvancedStats')}.`,
+    a: `${planText('gratuito')} (${dbPlanPrice('gratuito')}): ${t('plans.featureFreeProfile')}. ${planText('ouro')} (${dbPlanPrice('ouro', 'BRL')} / ${dbPlanPrice('ouro', 'USD')}): ${t('plans.featureUnlimitedOrders')}, ${t('plans.featureHighlight')}, ${t('plans.featureVerifiedBadge')} e ${t('plans.featureAdvancedStats')}.`,
   },
   { q: t('landing.faq5Q'), a: t('landing.faq5A') },
 ])
@@ -539,8 +539,9 @@ onUnmounted(() => {
           <p class="mt-3 text-[14px] text-slate-300 max-w-md">{{ t('landing.recebaChamadosDesc') }}</p>
           <div class="mt-5 flex flex-wrap gap-2 text-[12px] font-medium">
             <span class="px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-200">{{ planText('gratuito') }} {{ dbPlanPrice('gratuito') }}</span>
-            <span class="px-4 py-1.5 rounded-full bg-amber-500 text-slate-950">{{ planText('ouro') }} {{ dbPlanPrice('ouro') }}</span>
+            <span class="px-4 py-1.5 rounded-full bg-amber-500 text-slate-950">{{ planText('ouro') }} {{ dbPlanPrice('ouro', 'BRL') }} / {{ dbPlanPrice('ouro', 'USD') }}</span>
           </div>
+          <p class="mt-2 text-[11px] text-slate-400">{{ t('plans.billedInBrl') }} · {{ t('plans.billedInUsd') }} · {{ t('plans.cardOnly') }}</p>
           <div class="mt-6 flex flex-col sm:flex-row gap-3">
             <button @click="trackCta('pro_cadastrar'); goToModule('pro','register')" class="tesla-cta-primary px-8 py-2.5 rounded-full text-[14px] font-medium">{{ t('landing.cadastrarProfissional') }}</button>
             <button @click="scrollToId('contato')" class="tesla-cta-secondary px-8 py-2.5 rounded-full text-[14px] font-medium">{{ t('landing.falarWhatsapp') }}</button>

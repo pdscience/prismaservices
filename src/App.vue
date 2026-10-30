@@ -22,7 +22,7 @@ const {
   authUser, userProfile, userMode,
   showAuth,
   proProfile, showProfileModal, isLanding,
-  hydrateAuth, handleProfileModalSaved,
+  hydrateAuth, handleProfileModalSaved, loadProfessionalProfile,
 } = useAuth()
 
 const {
@@ -52,9 +52,16 @@ async function installApp() {
 
 // ---------- Views públicas (landing + diretório) em src/views ----------
 
-onMounted(() => {
+onMounted(async () => {
   loadData()
-  hydrateAuth()
+  await hydrateAuth()
+  const sessionId = new URLSearchParams(window.location.search).get('session_id')
+  if (sessionId && proProfile.value.auth_id) {
+    await loadProfessionalProfile(proProfile.value.auth_id)
+    const url = new URL(window.location.href)
+    url.searchParams.delete('session_id')
+    window.history.replaceState({}, '', url.toString())
+  }
   trackEvent('page_view_landing', { path: window.location.pathname })
   window.addEventListener('scroll', onPageScroll, { passive: true })
   window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)

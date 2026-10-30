@@ -1,14 +1,13 @@
 import { ref, computed } from 'vue'
 import type { Plan } from '../types'
-import { changePlan, createCheckoutSession, createPortalSession } from '../api/insforgeService'
+import { createCheckoutSession, createPortalSession } from '../api/insforgeService'
 import { User, Sparkles } from 'lucide-vue-next'
 import { useAuth } from './useAuth'
 import { useNavigation } from './useNavigation'
-import { useRequests } from './useRequests'
 import { pushToast } from './useUi'
 import { useI18n } from './useI18n'
 import { maxPhotosForPlan, maxCategoriesForPlan } from '../lib/planLimits'
-import { currencyForLang, formatPlanPrice, stripeEnvironment, type PlanCurrency } from '../lib/pricing'
+import { currencyForCountry, formatPlanPrice, stripeEnvironment, type PlanCurrency } from '../lib/pricing'
 
 const plans = ref<Plan[]>([])
 
@@ -115,22 +114,20 @@ const PLAN_FALLBACK_CENTS: Record<PlanCurrency, Record<string, number>> = {
   USD: { gratuito: 0, bronze: 600, prata: 1000, ouro: 9990 },
 }
 
-// Assinatura existente manda; caso contrário, o idioma define a moeda.
+// Assinatura existente manda; caso contrário, o país do cadastro define a moeda.
 const planCurrency = computed<PlanCurrency>(() => {
-  const { lang } = useI18n()
   const { proProfile } = useAuth()
   const hasActiveSubscription = !!proProfile.value.stripe_subscription_id
     && (proProfile.value.plan_status === 'active' || proProfile.value.plan_status === 'past_due')
-  return currencyForLang(
-    lang.value,
+  return currencyForCountry(
+    proProfile.value.country_code,
     hasActiveSubscription ? proProfile.value.billing_currency : null,
   )
 })
 
-function dbPlanPrice(id: string): string {
+function dbPlanPrice(id: string, currency: PlanCurrency = planCurrency.value): string {
   const { lang } = useI18n()
   const row = planMap.value.get(id)
-  const currency = planCurrency.value
   const cents = row
     ? (currency === 'USD' ? row.monthly_price_usd : row.monthly_price)
     : (PLAN_FALLBACK_CENTS[currency][id] ?? 0)
@@ -182,32 +179,20 @@ const upgradeRecommendation = computed(() => {
 })
 
 async function subscribePlan(targetPlan: string) {
-  const { proProfile, loadProfessionalProfile } = useAuth()
-  const { loadData } = useRequests()
+  const { proProfile } = useAuth()
   const { goToTab } = useNavigation()
-  const { t, planText } = useI18n()
+  const { t } = useI18n()
+  const currency = planCurrency.value
   try {
     if (!proProfile.value.id) {
       pushToast('warning', t('toasts.needLoginPro'))
       return
     }
     if (proProfile.value.plan === targetPlan) return
-    const currency = planCurrency.value
-    const row = planMap.value.get(targetPlan)
-    if (currency === 'USD' && row && !row.stripe_price_id_usd) {
-      pushToast('warning', t('toasts.usdNotConfigured'))
-      return
-    }
-    const hasActiveSubscription = !!proProfile.value.stripe_subscription_id && proProfile.value.plan_status === 'active'
+    const hasActiveSubscription = !!proProfile.value.stripe_subscription_id
+      && (proProfile.value.plan_status === 'active' || proProfile.value.plan_status === 'past_due')
     if (hasActiveSubscription) {
-      await changePlan(proProfile.value.id, targetPlan)
-      await loadData()
-      if (proProfile.value.auth_id) await loadProfessionalProfile(proProfile.value.auth_id)
-      else if (targetPlan === 'gratuito' || targetPlan === 'bronze' || targetPlan === 'prata' || targetPlan === 'ouro') {
-        proProfile.value.plan = targetPlan
-      }
-      const label = displayPlans.value.find((p) => p.id === targetPlan)?.name ?? planText(targetPlan)
-      pushToast('success', t('toasts.planChanged', { plan: label }))
+      await handleOpenPortal()
       return
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(proProfile.value.email)) {
@@ -215,13 +200,19 @@ async function subscribePlan(targetPlan: string) {
       goToTab('perfil_pro')
       return
     }
-    const { url } = await createCheckoutSession(proProfile.value.id, targetPlan, proProfile.value.email, currency)
+    const { url } = await createCheckoutSession(
+      proProfile.value.id,
+      targetPlan,
+      proProfile.value.email,
+      currency,
+      stripeEnvironment(),
+    )
     if (url) window.location.href = url
   } catch (err) {
     console.error('Erro ao assinar plano:', err)
     const message = err instanceof Error ? err.message : ''
-    if (message.includes('PRICE_NOT_CONFIGURED:USD')) {
-      pushToast('warning', t('toasts.usdNotConfigured'))
+    if (message.includes('PRICE_NOT_CONFIGURED:')) {
+      pushToast('warning', t('toasts.priceNotConfigured', { currency }))
     } else {
       pushToast('error', t('toasts.subscribeError'))
     }
@@ -233,7 +224,10 @@ async function handleOpenPortal() {
   const { t } = useI18n()
   try {
     if (!proProfile.value.id) return
-    const { url } = await createPortalSession(proProfile.value.id, stripeEnvironment())
+    const environment = proProfile.value.stripe_subscription_id
+      ? (proProfile.value.billing_environment ?? stripeEnvironment())
+      : stripeEnvironment()
+    const { url } = await createPortalSession(proProfile.value.id, environment)
     if (url) window.location.href = url
   } catch (err) {
     console.error('Erro ao abrir portal de assinatura:', err)

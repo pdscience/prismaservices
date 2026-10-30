@@ -491,6 +491,9 @@ export default {
     featureLimitReached: 'Limite do seu plano atingido.',
     ctaContinueFree: 'Continuar Grátis',
     ctaBackToFree: 'Cancele pelo Portal para voltar ao Gratuito',
+    billedInBrl: 'Cobrança em R$ (Brasil)',
+    billedInUsd: 'Cobrança em US$ (exterior)',
+    cardOnly: 'Cartão de crédito ou débito',
   },
 
   modals: {
@@ -694,7 +697,7 @@ export default {
     invalidEmail: 'Cadastre um e-mail válido no seu perfil para assinar o plano.',
     planChanged: 'Plano alterado para {plan}.',
     subscribeError: 'Erro ao assinar plano. Tente novamente.',
-    usdNotConfigured: 'Pagamento em dólar ainda não está disponível. Tente novamente em breve.',
+    priceNotConfigured: 'Pagamento em {currency} ainda não está configurado neste ambiente.',
     portalError: 'Erro ao abrir o portal de gerenciamento de assinatura.',
     trialActivated: 'Teste de 30 dias do plano Premium ativado!',
     trialActivateError: 'Não foi possível ativar o teste. Tente novamente.',

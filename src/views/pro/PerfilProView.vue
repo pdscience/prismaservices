@@ -35,7 +35,7 @@ const { t, categoryText, lang } = useI18n()
 const {
   displayPlans, requestUsage,
   hasFeature,
-  PLAN_LABELS, PLAN_PRICES,
+  PLAN_LABELS, PLAN_PRICES, planCurrency,
   subscribePlan, handleOpenPortal,
 } = usePlans()
 
@@ -210,6 +210,9 @@ async function copyReferralLink() {
                   {{ PLAN_PRICES[proProfile.plan] }}
                 </span>
                 <span class="text-slate-400 text-sm">{{ t('pro.perMonth') }}</span>
+                <p class="text-[11px] text-slate-400 mt-1">
+                  {{ planCurrency === 'BRL' ? t('plans.billedInBrl') : t('plans.billedInUsd') }} · {{ t('plans.cardOnly') }}
+                </p>
               </div>
             </div>
 

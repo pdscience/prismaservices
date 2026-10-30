@@ -4,7 +4,7 @@ import { useUi } from '../../composables/useUi'
 import { useI18n } from '../../composables/useI18n'
 import { Sparkles, Check } from 'lucide-vue-next'
 
-const { displayPlans, subscribePlan } = usePlans()
+const { displayPlans, subscribePlan, planCurrency } = usePlans()
 const { showOnboardingPlans } = useUi()
 const { t } = useI18n()
 </script>
@@ -43,6 +43,7 @@ const { t } = useI18n()
               <div>
                 <h4 class="font-bold text-white text-sm">{{ p.name }}</h4>
                 <p class="text-amber-400 font-extrabold text-sm">{{ p.price }}<span class="text-[10px] text-slate-400 font-medium">{{ t('pro.perMonth') }}</span></p>
+                <p class="text-[10px] text-slate-400">{{ planCurrency === 'BRL' ? t('plans.billedInBrl') : t('plans.billedInUsd') }} · {{ t('plans.cardOnly') }}</p>
               </div>
             </div>
             <p class="text-[10px] text-slate-400 mb-2">{{ p.tagline }}</p>

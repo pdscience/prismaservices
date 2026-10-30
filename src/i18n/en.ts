@@ -490,6 +490,9 @@ export default {
     featureLimitReached: 'Your plan limit was reached.',
     ctaContinueFree: 'Continue for Free',
     ctaBackToFree: 'Cancel through the portal to go back to Free',
+    billedInBrl: 'Billed in R$ (Brazil)',
+    billedInUsd: 'Billed in US$ (international)',
+    cardOnly: 'Credit or debit card',
   },
 
   modals: {
@@ -694,7 +697,7 @@ export default {
     invalidEmail: 'Add a valid e-mail to your profile to subscribe to a plan.',
     planChanged: 'Plan changed to {plan}.',
     subscribeError: 'Error while subscribing. Please try again.',
-    usdNotConfigured: 'USD payments are not available yet. Please try again soon.',
+    priceNotConfigured: 'Payment in {currency} is not configured in this environment yet.',
     portalError: 'Error while opening the subscription management portal.',
     trialActivated: '30-day Premium plan trial activated!',
     trialActivateError: 'Could not activate the trial. Please try again.',
