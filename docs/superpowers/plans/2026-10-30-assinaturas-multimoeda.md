@@ -482,15 +482,58 @@ Expected: todos passam.
 
 - [ ] **Step 3: Checklist manual Stripe/InsForge**
 
-- [ ] Criar Price test USD 99,90 e inserir em `plan_prices`.
-- [ ] Criar Prices live BRL 49,90 e USD 99,90 e inserir em `plan_prices`.
-- [ ] Conectar Stripe test e live no InsForge.
-- [ ] Configurar webhooks test e live para a mesma função.
+Estado verificado em 2026-10-30 (após o merge na `main`):
+
+| Item | Estado |
+| --- | --- |
+| Migrações + trigger por ambiente | aplicado |
+| Secrets `STRIPE_TEST_SECRET_KEY` / `STRIPE_TEST_WEBHOOK_SECRET` | existem |
+| Webhook Stripe test | recebendo eventos (`environment='test'`) |
+| `plan_prices` | só `ouro / test / BRL / 4990 / price_1U0CldKUfRcMtQSBbx4QJEO0` |
+| `change-plan` deployada | versão antiga (14/09) — precisa redeploy |
+| `STRIPE_LIVE_SECRET_KEY` / `STRIPE_LIVE_WEBHOOK_SECRET` | inexistentes |
+
+Bloqueios para testar agora:
+
+- [ ] Redeploy da função `change-plan` (o código local usa `billing_environment` + `plan_prices`):
+
+  ```bash
+  npx --no-install @insforge/cli functions deploy change-plan --file functions/change-plan.ts
+  ```
+
+- [ ] Criar Price **USD 99,90 recorrente (test)** no Stripe Dashboard e inserir em `plan_prices`
+      (sem essa linha o checkout US responde `PRICE_NOT_CONFIGURED:USD:test`):
+
+  ```bash
+  npx --no-install @insforge/cli db query "insert into plan_prices (plan_id, environment, currency, stripe_price_id, unit_amount) values ('ouro','test','USD','price_XXX',9990)"
+  ```
+
+  Observação: o insert pelo CLI funciona; `--unrestricted` está desabilitado neste projeto.
+
+- [ ] Explicitar o ambiente no `.env` local (`test` já é o padrão do código) e rodar `npm run dev`:
+
+  ```env
+  VITE_STRIPE_ENVIRONMENT=test
+  ```
+
+Roteiro de teste em test mode:
+
+- [ ] Brasil (BRL): pro com `country_code=BR` → Assinar Premium → Stripe (cartão `4242 4242 4242 4242`) →
+      conferir `plan=ouro, plan_status=active, billing_currency=BRL, billing_environment=test`.
+- [ ] Exterior (USD): pro com `country_code` ≠ BR → selo "Cobrança em US$" → checkout USD →
+      conferir `billing_currency=USD, billing_environment=test`.
+- [ ] Assinatura existente: "Assinar Premium" / "Gerenciar assinatura" abre o Billing Portal (não troca o plano direto).
+- [ ] Cancelamento no portal → `customer.subscription.deleted` → `plan=gratuito, plan_status=canceled`.
+- [ ] Isolamento: evento live não altera assinatura test (regra `public.billing_event_applies` já validada via SQL).
+
+Live (depois do test mode):
+
+- [ ] Criar Prices live BRL 49,90 e USD 99,90 e inserir as 2 linhas com `environment='live'`.
+- [ ] Conectar Stripe live no InsForge e configurar o webhook live para a mesma função.
 - [ ] Configurar `STRIPE_LIVE_SECRET_KEY` e `STRIPE_LIVE_WEBHOOK_SECRET`.
 - [ ] Definir `VITE_STRIPE_ENVIRONMENT=live` na Vercel e redeployar.
-- [ ] Testar assinatura BR e US em test mode.
-- [ ] Confirmar que evento test não altera assinatura live.
-- [ ] Testar assinatura real, portal e cancelamento em live.
+- [ ] Repetir o roteiro BR/US em live e confirmar `billing_environment='live'`.
+- [ ] Opcional: para trocar Premium por Bronze/Prata no portal, faltam Prices e linhas em `plan_prices` desses planos.
 
 - [ ] **Step 4: Commit final**
 
