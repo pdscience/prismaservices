@@ -489,30 +489,32 @@ Estado verificado em 2026-10-30 (após o merge na `main`):
 | Migrações + trigger por ambiente | aplicado |
 | Secrets `STRIPE_TEST_SECRET_KEY` / `STRIPE_TEST_WEBHOOK_SECRET` | existem |
 | Webhook Stripe test | recebendo eventos (`environment='test'`) |
-| `plan_prices` | só `ouro / test / BRL / 4990 / price_1U0CldKUfRcMtQSBbx4QJEO0` |
-| `change-plan` deployada | versão antiga (14/09) — precisa redeploy |
+| `plan_prices` | `ouro / test / BRL / 4990 / price_1U0CldKUfRcMtQSBbx4QJEO0` e `ouro / test / USD / 9990 / price_1UWPdzKUfRcMtQSBsSf7xklo` |
+| `change-plan` deployada | nova versão (usa `billing_environment` + `plan_prices`) |
 | `STRIPE_LIVE_SECRET_KEY` / `STRIPE_LIVE_WEBHOOK_SECRET` | inexistentes |
 
 Bloqueios para testar agora:
 
-- [ ] Redeploy da função `change-plan` (o código local usa `billing_environment` + `plan_prices`):
+- [x] Redeploy da função `change-plan` (o código local usa `billing_environment` + `plan_prices`):
 
   ```bash
   npx --no-install @insforge/cli functions deploy change-plan --file functions/change-plan.ts
   ```
 
-- [ ] Criar Price **USD 99,90 recorrente (test)** no Stripe Dashboard e inserir em `plan_prices`
+- [x] Price **USD 99,90 recorrente (test)** criado no Stripe e inserido em `plan_prices`
       (sem essa linha o checkout US responde `PRICE_NOT_CONFIGURED:USD:test`):
 
   ```bash
-  npx --no-install @insforge/cli db query "insert into plan_prices (plan_id, environment, currency, stripe_price_id, unit_amount) values ('ouro','test','USD','price_XXX',9990)"
+  npx --no-install @insforge/cli db query "insert into plan_prices (plan_id, environment, currency, stripe_price_id, unit_amount) values ('ouro','test','USD','price_1UWPdzKUfRcMtQSBsSf7xklo',9990)"
   ```
 
   Observação: o insert pelo CLI funciona; `--unrestricted` está desabilitado neste projeto.
 
-- [ ] Explicitar o ambiente no `.env` local (`test` já é o padrão do código) e rodar `npm run dev`:
+- [x] Nenhuma chave Stripe no `.env`: as secrets ficam somente no InsForge. `VITE_STRIPE_ENVIRONMENT`
+      não é segredo — o código assume `test` por padrão e só precisa ser `live` no build da Vercel:
 
   ```env
+  # apenas se quiser explicitar no ambiente local
   VITE_STRIPE_ENVIRONMENT=test
   ```
 
