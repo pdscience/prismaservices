@@ -140,6 +140,8 @@ export default {
     recebaChamados: 'Receba chamados ainda hoje',
     recebaChamadosDesc: 'Broadcast com foto + IA • WhatsApp direto • Recibo digital e relatórios.',
     seloVerificado: 'Selo verificado no Premium',
+    proHookHotLeads: 'Leads quentes com foto e diagnóstico de IA',
+    proHookVisibility: 'Perfil em destaque nas buscas da sua região',
     faqTitulo: 'Perguntas frequentes',
     faqSubtitulo: 'Tudo o que você precisa saber antes de começar',
     duvidasFinal: 'Dúvidas? Veja as perguntas frequentes acima no conteúdo — ou chame no WhatsApp.',

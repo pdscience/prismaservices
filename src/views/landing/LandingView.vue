@@ -537,6 +537,16 @@ onUnmounted(() => {
           <span class="inline-flex w-fit items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-bold"><Handshake class="w-4 h-4" /> {{ t('landing.paraProfissionais') }}</span>
           <p class="tesla-title text-white text-[28px] sm:text-[36px] leading-tight mt-4">{{ t('landing.recebaChamados') }}</p>
           <p class="mt-3 text-[14px] text-slate-300 max-w-md">{{ t('landing.recebaChamadosDesc') }}</p>
+          <ul class="mt-4 space-y-2 max-w-md">
+            <li class="flex items-start gap-2 text-[12px] text-slate-200">
+              <CheckCircle2 class="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+              <span>{{ t('landing.proHookHotLeads') }}</span>
+            </li>
+            <li class="flex items-start gap-2 text-[12px] text-slate-200">
+              <CheckCircle2 class="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+              <span>{{ t('landing.proHookVisibility') }}</span>
+            </li>
+          </ul>
           <div class="mt-5 flex flex-wrap gap-2 text-[12px] font-medium">
             <span class="px-4 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-200">{{ planText('gratuito') }} {{ dbPlanPrice('gratuito') }}</span>
             <span class="px-4 py-1.5 rounded-full bg-amber-500 text-slate-950">{{ planText('ouro') }} {{ dbPlanPrice('ouro', 'BRL') }} / {{ dbPlanPrice('ouro', 'USD') }}</span>

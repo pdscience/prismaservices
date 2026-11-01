@@ -139,6 +139,8 @@ export default {
     recebaChamados: 'Start receiving jobs today',
     recebaChamadosDesc: 'Broadcast with photo + AI • Direct WhatsApp • Digital receipt and reports.',
     seloVerificado: 'Verified badge on Premium',
+    proHookHotLeads: 'Hot leads with photo + AI diagnosis',
+    proHookVisibility: 'Profile featured in local search results',
     faqTitulo: 'Frequently asked questions',
     faqSubtitulo: 'Everything you need to know before you start',
     duvidasFinal: 'Still unsure? See the FAQ above — or chat on WhatsApp.',
