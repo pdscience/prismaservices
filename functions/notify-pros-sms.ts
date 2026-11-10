@@ -136,7 +136,7 @@ export default async function (req: Request): Promise<Response> {
 
   const { data: pros } = await client.database
     .from('professionals')
-    .select('id, phone, category, categories, cidade, uf, coverage_bairros, plan, alerts_enabled')
+    .select('id, phone, category, categories, cidade, uf, coverage_bairros, plan, alerts_enabled, country_code')
   const { data: plans } = await client.database
     .from('plans')
     .select('id, receives_broadcasts')
@@ -148,11 +148,14 @@ export default async function (req: Request): Promise<Response> {
     for (const p of pros ?? []) {
       if (sent >= MAX_SENDS_PER_RUN) break
       if (p.alerts_enabled === false || !okPlans.has(p.plan) || !p.phone) continue
+      // SMS só para pros fora do Brasil (country_code vazio/nulo = BR, base legada).
+      const cc = String(p.country_code ?? '').trim().toUpperCase()
+      if (!cc || cc === 'BR') continue
       const cats = [p.category, ...((p.categories as string[] | null) ?? [])]
       if (!cats.includes(r.category)) continue
       if (!areaMatches(String(r.client_address ?? ''), p)) continue
       if (await alreadyLogged(client, r.id, p.id)) continue
-      const body = `CasaObraReparos: novo pedido de ${r.category ?? 'serviço'} em ${String(r.client_address ?? '').slice(0, 60)}. Abra o app para ver detalhes.`
+      const body = `CasaObraReparos: new ${r.category ?? 'service'} request at ${String(r.client_address ?? '').slice(0, 60)}. Open the app for details.`
       const ok = await sendSms(accountSid, authToken, fromNumber, toTwilio(p.phone), body)
       if (ok) {
         await client.database

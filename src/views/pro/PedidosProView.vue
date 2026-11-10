@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import { statusSteps } from '../../lib/requestStatus'
-import { buildWhatsAppLink } from '../../lib/whatsapp'
+import { buildContactLink, isBrazilMarket } from '../../lib/contact'
 import { updateProfessional } from '../../api/insforgeService'
 import { useAuth } from '../../composables/useAuth'
 import { useNavigation } from '../../composables/useNavigation'
@@ -29,7 +29,7 @@ const { activeTab, goToTab } = useNavigation()
 const { proRequests, handleUpdateStatus, loadData } = useRequests()
 const { canReceiveRequests } = usePlans()
 const { scheduleModal, schedulePrice } = useUi()
-const { t, categoryText, statusText } = useI18n()
+const { t, categoryText, statusText, lang } = useI18n()
 
 function readAlertsPref(): boolean {
   try {
@@ -256,8 +256,8 @@ onUnmounted(() => {
                 </button>
 
                 <a
-                  :href="buildWhatsAppLink(req.client_phone, t('pro.waClient', { name: req.client_name, pro: proProfile.name, id: req.id, category: categoryText(req.category) }))"
-                  target="_blank"
+                  :href="buildContactLink(req.client_phone, t('pro.waClient', { name: req.client_name, pro: proProfile.name, id: req.id, category: categoryText(req.category) }), lang)"
+                  :target="isBrazilMarket(lang) ? '_blank' : undefined"
                   rel="noopener noreferrer"
                   class="w-full py-2 rounded-xl bg-slate-800 text-amber-400 border border-amber-500/30 font-semibold text-xs hover:bg-slate-700 flex items-center justify-center gap-1.5"
                 >

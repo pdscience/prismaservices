@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { CATEGORIES } from '../../lib/categories'
+import { isBrazilMarket } from '../../lib/contact'
 import { filterProfessionals, paginate } from '../../lib/directoryFilters'
 import { useAuth } from '../../composables/useAuth'
 import { useNavigation } from '../../composables/useNavigation'
@@ -32,7 +33,7 @@ import {
 } from 'lucide-vue-next'
 
 const { userMode, authUser, userProfile } = useAuth()
-const { t, categoryText, complexityText, planText } = useI18n()
+const { t, categoryText, complexityText, planText, lang } = useI18n()
 const { activeTab, goToTab } = useNavigation()
 const {
   findProfessional,
@@ -123,7 +124,7 @@ watch(gridTotalPages, (tp) => {
             <a
               v-if="createdOrderWhatsApp"
               :href="createdOrderWhatsApp"
-              target="_blank"
+              :target="isBrazilMarket(lang) ? '_blank' : undefined"
               rel="noopener noreferrer"
               class="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-green-600 text-white text-xs font-bold hover:bg-green-500 transition-all flex items-center justify-center gap-2"
             >

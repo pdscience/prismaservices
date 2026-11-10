@@ -26,6 +26,8 @@ import {
   HeartHandshake,
   Stethoscope,
   Activity,
+  Waves,
+  Stamp,
 } from 'lucide-vue-next'
 
 export const CATEGORIES = [
@@ -56,6 +58,8 @@ export const CATEGORIES = [
   { name: 'Cuidador de Idosos', icon: HeartHandshake, gradient: 'from-rose-600 to-red-400', accent: 'text-rose-300', img: 'https://images.pexels.com/photos/29372724/pexels-photo-29372724.jpeg?auto=compress&cs=tinysrgb&w=400' },
   { name: 'Acompanhante Hospitalar', icon: Stethoscope, gradient: 'from-emerald-600 to-teal-500', accent: 'text-emerald-300', img: 'https://images.pexels.com/photos/18459245/pexels-photo-18459245.jpeg?auto=compress&cs=tinysrgb&w=400' },
   { name: 'Fisioterapia Domiciliar', icon: Activity, gradient: 'from-sky-600 to-indigo-500', accent: 'text-sky-300', img: 'https://images.pexels.com/photos/6975756/pexels-photo-6975756.jpeg?auto=compress&cs=tinysrgb&w=400' },
+  { name: 'Piscineiro', icon: Waves, gradient: 'from-cyan-500 to-sky-400', accent: 'text-cyan-300', img: 'https://images.pexels.com/photos/30546817/pexels-photo-30546817.jpeg?auto=compress&cs=tinysrgb&w=400' },
+  { name: 'Serviços de Cartório', icon: Stamp, gradient: 'from-amber-700 to-yellow-600', accent: 'text-amber-300', img: 'https://images.pexels.com/photos/18687845/pexels-photo-18687845.jpeg?auto=compress&cs=tinysrgb&w=400' },
 ]
 
 export const CATEGORY_UNLISTED = 'Serviço que não está na lista'

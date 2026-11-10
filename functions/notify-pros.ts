@@ -136,7 +136,7 @@ export default async function (req: Request): Promise<Response> {
 
   const { data: pros } = await client.database
     .from('professionals')
-    .select('id, phone, category, categories, cidade, uf, coverage_bairros, plan, alerts_enabled')
+    .select('id, phone, category, categories, cidade, uf, coverage_bairros, plan, alerts_enabled, country_code')
   const { data: plans } = await client.database
     .from('plans')
     .select('id, receives_broadcasts')
@@ -148,6 +148,9 @@ export default async function (req: Request): Promise<Response> {
     for (const p of pros ?? []) {
       if (sent >= MAX_SENDS_PER_RUN) break
       if (p.alerts_enabled === false || !okPlans.has(p.plan) || !p.phone) continue
+      // WhatsApp só para o mercado brasileiro: country_code vazio/nulo = BR (base legada).
+      const cc = String(p.country_code ?? '').trim().toUpperCase()
+      if (cc && cc !== 'BR') continue
       const cats = [p.category, ...((p.categories as string[] | null) ?? [])]
       if (!cats.includes(r.category)) continue
       if (!areaMatches(String(r.client_address ?? ''), p)) continue

@@ -2,11 +2,12 @@
 import { useAuth } from '../../composables/useAuth'
 import { useUi } from '../../composables/useUi'
 import { useI18n } from '../../composables/useI18n'
+import { isBrazilMarket } from '../../lib/contact'
 import { FileText, Printer, X } from 'lucide-vue-next'
 
 const { proProfile } = useAuth()
 const { viewReceiptModal } = useUi()
-const { t, categoryText } = useI18n()
+const { t, categoryText, lang } = useI18n()
 
 function printReceipt() {
   window.print()
@@ -43,7 +44,7 @@ function printReceipt() {
       <div class="space-y-2 text-[11px]">
         <p><strong>{{ t('modals.receiptProvider') }}:</strong> {{ proProfile.name }}</p>
         <p><strong>{{ t('modals.receiptCategory') }}:</strong> {{ categoryText(proProfile.category) }}</p>
-        <p><strong>{{ t('modals.receiptPix') }}:</strong> {{ proProfile.pix_key }}</p>
+        <p v-if="isBrazilMarket(lang)"><strong>{{ t('modals.receiptPix') }}:</strong> {{ proProfile.pix_key }}</p>
       </div>
 
       <div class="border-t border-b border-slate-200 py-3 space-y-2 text-[11px]">

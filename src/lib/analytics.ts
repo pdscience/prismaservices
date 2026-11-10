@@ -11,6 +11,8 @@ declare global {
 export type ConversionEvent =
   | 'cta_click'
   | 'lead_whatsapp'
+  | 'lead_email'
+  | 'lead_sms'
   | 'signup_start'
   | 'login_start'
   | 'page_view_landing'

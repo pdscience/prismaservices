@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { statusSteps, clientStatusGroup } from '../../lib/requestStatus'
-import { buildWhatsAppLink } from '../../lib/whatsapp'
+import { buildContactLink, isBrazilMarket } from '../../lib/contact'
 import { useAuth } from '../../composables/useAuth'
 import { useNavigation } from '../../composables/useNavigation'
 import { useRequests } from '../../composables/useRequests'
@@ -11,7 +11,7 @@ import { useI18n } from '../../composables/useI18n'
 import ClientSubTabs from '../../components/layout/ClientSubTabs.vue'
 import { Calendar, Clock, FileText, MapPin, MessageSquare, Star, User } from 'lucide-vue-next'
 
-const { t, categoryText, statusText } = useI18n()
+const { t, categoryText, statusText, lang } = useI18n()
 
 const { userMode } = useAuth()
 const { activeTab, goToTab } = useNavigation()
@@ -161,11 +161,11 @@ const { viewReceiptModal, rateOrderModal, ratingStars } = useUi()
               </div>
 
               <div class="md:col-span-3 space-y-2 flex flex-col justify-center">
-                <!-- WHATSAPP ACTION BUTTON -->
+                <!-- CONTACT ACTION BUTTON (WhatsApp no Brasil, SMS nos EUA) -->
                 <a
                   v-if="hasFeature('whatsappVisible')"
-                  :href="buildWhatsAppLink(findProfessional(req.professional_id)?.phone || '', t('clientRequests.waConfirm', { name: findProfessional(req.professional_id)?.name || t('common.prestador'), id: req.id, category: categoryText(req.category) }))"
-                  target="_blank"
+                  :href="buildContactLink(findProfessional(req.professional_id)?.phone || '', t('clientRequests.waConfirm', { name: findProfessional(req.professional_id)?.name || t('common.prestador'), id: req.id, category: categoryText(req.category) }), lang)"
+                  :target="isBrazilMarket(lang) ? '_blank' : undefined"
                   rel="noopener noreferrer"
                   class="w-full py-2 px-3 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition-all flex items-center justify-center gap-1.5"
                 >

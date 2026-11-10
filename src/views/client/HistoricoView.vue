@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { formatRequestDate } from '../../lib/requestStatus'
-import { buildWhatsAppLink } from '../../lib/whatsapp'
+import { buildContactLink, isBrazilMarket } from '../../lib/contact'
 import type { ServiceRequest } from '../../types'
 import { useAuth } from '../../composables/useAuth'
 import { useNavigation } from '../../composables/useNavigation'
@@ -13,7 +13,7 @@ import { useI18n } from '../../composables/useI18n'
 import ClientSubTabs from '../../components/layout/ClientSubTabs.vue'
 import { History, MessageSquare, Printer, RotateCcw, Star } from 'lucide-vue-next'
 
-const { t, categoryText, statusText } = useI18n()
+const { t, categoryText, statusText, lang } = useI18n()
 
 const { userMode } = useAuth()
 const { activeTab, goToTab } = useNavigation()
@@ -120,12 +120,12 @@ function handleRehire(req: ServiceRequest): void {
               </button>
               <a
                 v-if="findProfessional(req.professional_id) && hasFeature('whatsappVisible')"
-                :href="buildWhatsAppLink(findProfessional(req.professional_id)?.phone || '', t('clientHistory.waHire', { name: findProfessional(req.professional_id)?.name ?? t('common.profissional'), category: categoryText(req.category) }))"
-                target="_blank"
+                :href="buildContactLink(findProfessional(req.professional_id)?.phone || '', t('clientHistory.waHire', { name: findProfessional(req.professional_id)?.name ?? t('common.profissional'), category: categoryText(req.category) }), lang)"
+                :target="isBrazilMarket(lang) ? '_blank' : undefined"
                 rel="noopener noreferrer"
                 class="flex-1 py-2 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-500/20 transition-all flex items-center justify-center gap-2"
               >
-                <MessageSquare class="w-3.5 h-3.5" /> WhatsApp
+                <MessageSquare class="w-3.5 h-3.5" /> {{ t('pro.contactPhone') }}
               </a>
             </div>
           </div>

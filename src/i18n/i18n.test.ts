@@ -89,6 +89,14 @@ describe('rotulos de valores gravados no banco', () => {
     expect(categoryLabel('es', 'Encanador')).toBe('Plomero')
     expect(categoryLabel('en', 'Categoria Inventada')).toBe('Categoria Inventada')
   })
+  it('traduz as categorias Piscineiro e Serviços de Cartório nos três idiomas', () => {
+    expect(categoryLabel('pt-BR', 'Piscineiro')).toBe('Piscineiro')
+    expect(categoryLabel('en', 'Piscineiro')).toBe('Pool maintenance')
+    expect(categoryLabel('es', 'Piscineiro')).toBe('Piscinero')
+    expect(categoryLabel('pt-BR', 'Serviços de Cartório')).toBe('Serviços de Cartório')
+    expect(categoryLabel('en', 'Serviços de Cartório')).toBe('Notary services')
+    expect(categoryLabel('es', 'Serviços de Cartório')).toBe('Notaría')
+  })
   it('traduz a complexidade da IA', () => {
     expect(complexityLabel('en', 'Média')).toBe('Medium')
     expect(complexityLabel('es', 'Alta')).toBe('Alta')

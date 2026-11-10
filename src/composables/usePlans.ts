@@ -7,7 +7,7 @@ import { useNavigation } from './useNavigation'
 import { pushToast } from './useUi'
 import { useI18n } from './useI18n'
 import { maxPhotosForPlan, maxCategoriesForPlan } from '../lib/planLimits'
-import { currencyForCountry, formatPlanPrice, stripeEnvironment, type PlanCurrency } from '../lib/pricing'
+import { currencyForCountry, currencyForLang, formatPlanPrice, stripeEnvironment, type PlanCurrency } from '../lib/pricing'
 
 const plans = ref<Plan[]>([])
 
@@ -114,11 +114,14 @@ const PLAN_FALLBACK_CENTS: Record<PlanCurrency, Record<string, number>> = {
   USD: { gratuito: 0, bronze: 600, prata: 1000, ouro: 9990 },
 }
 
-// Assinatura existente manda; caso contrário, o país do cadastro define a moeda.
+// Assinatura existente manda; sem perfil carregado (visitante da landing), o
+// idioma decide a moeda exibida; com perfil, o país do cadastro decide.
 const planCurrency = computed<PlanCurrency>(() => {
   const { proProfile } = useAuth()
+  const { lang } = useI18n()
   const hasActiveSubscription = !!proProfile.value.stripe_subscription_id
     && (proProfile.value.plan_status === 'active' || proProfile.value.plan_status === 'past_due')
+  if (!proProfile.value.id) return currencyForLang(lang.value)
   return currencyForCountry(
     proProfile.value.country_code,
     hasActiveSubscription ? proProfile.value.billing_currency : null,

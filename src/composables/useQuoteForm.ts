@@ -8,7 +8,7 @@ import {
   type SendMode,
 } from '../lib/quoteFlow'
 import { buildClientPrefill } from '../lib/quotePrefill'
-import { buildWhatsAppLink } from '../lib/whatsapp'
+import { buildContactLink } from '../lib/contact'
 import { useAuth } from './useAuth'
 import { useNavigation } from './useNavigation'
 import { useProfessionals } from './useProfessionals'
@@ -249,7 +249,8 @@ async function handleConfirmOrder() {
         '',
         t('ai.waAsk'),
       ].join('\n')
-      whatsAppUrl = buildWhatsAppLink(pro.phone, msg)
+      // WhatsApp no Brasil, SMS nos EUA — mesmo telefone e mensagem.
+      whatsAppUrl = buildContactLink(pro.phone, msg, useI18n().lang.value)
     }
 
     createdOrderSuccess.value = created

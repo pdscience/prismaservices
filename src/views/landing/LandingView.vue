@@ -5,6 +5,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { trackEvent, getWhatsAppNumber } from '../../lib/analytics'
 import { buildWhatsAppLink } from '../../lib/whatsapp'
+import { buildSmsLink, buildSupportEmail, isBrazilMarket, supportEmail, supportSms } from '../../lib/contact'
 import { CATEGORIES, CATEGORY_UNLISTED } from '../../lib/categories'
 import { useAuth } from '../../composables/useAuth'
 import { useNavigation } from '../../composables/useNavigation'
@@ -81,7 +82,8 @@ const handleContactSubmit = () => {
   const categoryLine = isUnlisted
     ? `${t('landing.waCategoria')}: ${contactForm.value.categoryOther} (${t('landing.waCategoriaSugerida')})`
     : contactCategory.value ? `${t('landing.waCategoria')}: ${categoryText(contactCategory.value)}` : ''
-  // Experiência sem sair da página: abre WhatsApp em nova aba + mantém toast
+  // Experiência sem sair da página: abre o canal do mercado (WhatsApp no
+  // Brasil, app de email nos EUA) com a mensagem pronta + mantém toast.
   const waMessage = [
     t('landing.waOla'),
     ``,
@@ -94,10 +96,15 @@ const handleContactSubmit = () => {
     ``,
     `${t('landing.waMensagem')}: ${message}`,
   ].filter(Boolean).join('\n')
-
-  trackEvent('lead_whatsapp', { category: isUnlisted ? 'categoria_sugerida' : (category || 'geral'), subject: subject || '' })
+  const trackParams = { category: isUnlisted ? 'categoria_sugerida' : (category || 'geral'), subject: subject || '' }
   try {
-    window.open(buildWhatsAppLink(getWhatsAppNumber(), waMessage), '_blank', 'noopener')
+    if (isBrazilMarket(lang.value)) {
+      trackEvent('lead_whatsapp', trackParams)
+      window.open(buildWhatsAppLink(getWhatsAppNumber(), waMessage), '_blank', 'noopener')
+    } else {
+      trackEvent('lead_email', trackParams)
+      window.location.href = buildSupportEmail(supportEmail(), subject || t('landing.assunto'), waMessage)
+    }
   } catch { /* noop */ }
 
   setTimeout(() => {
@@ -108,6 +115,10 @@ const handleContactSubmit = () => {
     setTimeout(() => { contactSuccess.value = false }, 6000)
   }, 500)
 }
+
+/** Botão alternativo nos EUA: abre o app de SMS com o número de suporte. */
+const smsSupportLink = computed(() =>
+  !isBrazilMarket(lang.value) ? buildSmsLink(supportSms(), t('landing.waOla')) : '')
 
 // ---------- Landing premium (página única) ----------
 const heroVideoUrl = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_HERO_VIDEO_URL || ''
@@ -644,7 +655,13 @@ onUnmounted(() => {
         <textarea v-model="contactForm.message" required rows="3" :placeholder="t('landing.descrevaNecessidade')" class="w-full bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/15 transition-all resize-none" />
         <div v-if="contactSuccess" class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 flex items-center gap-2"><CheckCircle2 class="w-4 h-4 text-emerald-400 shrink-0" /><p class="text-xs text-emerald-300">{{ t('landing.whatsOpened') }}</p></div>
         <div class="flex flex-col sm:flex-row gap-3 justify-center">
-          <button type="submit" :disabled="contactSubmitting" class="tesla-cta-primary flex-1 px-8 py-2.5 rounded-full text-[14px] font-medium disabled:opacity-50">{{ contactSubmitting ? t('landing.opening') : t('landing.enviarViaWhatsapp') }}</button>
+          <button type="submit" :disabled="contactSubmitting" class="tesla-cta-primary flex-1 px-8 py-2.5 rounded-full text-[14px] font-medium disabled:opacity-50">{{ contactSubmitting ? t('landing.opening') : (isBrazilMarket(lang) ? t('landing.enviarViaWhatsapp') : t('landing.sendByEmail')) }}</button>
+          <a
+            v-if="smsSupportLink"
+            :href="smsSupportLink"
+            class="tesla-cta-secondary flex-1 px-8 py-2.5 rounded-full text-[14px] font-medium text-center"
+            @click="trackCta('sms_support')"
+          >{{ t('landing.sendBySms') }}</a>
         </div>
       </form>
       </div>

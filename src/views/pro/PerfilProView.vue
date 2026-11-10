@@ -9,6 +9,7 @@ import { activateTrial, getReferrals } from '../../api/insforgeService'
 import type { Referral } from '../../types'
 import { pushToast } from '../../composables/useUi'
 import { useI18n } from '../../composables/useI18n'
+import { isBrazilMarket } from '../../lib/contact'
 import ProSubTabs from '../../components/layout/ProSubTabs.vue'
 import PortfolioManager from '../../components/PortfolioManager.vue'
 import type { PortfolioItem } from '../../types'
@@ -136,7 +137,7 @@ async function copyReferralLink() {
                 </div>
                 <p class="text-xs text-amber-400 font-semibold">{{ categoryText(proProfile.category) }}</p>
                 <p class="text-xs text-slate-400 mt-1 flex items-center gap-1">
-                  <Phone class="w-3 h-3" /> WhatsApp: {{ proProfile.phone }}
+                  <Phone class="w-3 h-3" /> {{ t('pro.contactPhone') }}: {{ proProfile.phone }}
                 </p>
               </div>
             </div>
@@ -348,7 +349,7 @@ async function copyReferralLink() {
               <Copy class="w-3.5 h-3.5" /> {{ t('pro.copyLink') }}
             </button>
             <a
-              v-if="whatsappShareLink"
+              v-if="whatsappShareLink && isBrazilMarket(lang)"
               :href="whatsappShareLink"
               target="_blank"
               rel="noopener noreferrer"

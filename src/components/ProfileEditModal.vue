@@ -6,6 +6,7 @@ import { uploadProfessionalAvatar, updateProfessional, updateUserRecord, createP
 import { useNavigation } from '../composables/useNavigation'
 import { usePlans } from '../composables/usePlans'
 import { useI18n } from '../composables/useI18n'
+import { isBrazilMarket } from '../lib/contact'
 import { canAddCategory, isOverCategoryLimit } from '../lib/planLimits'
 import { dialOf } from '../lib/geo'
 import { currencyForCountry, stripeEnvironment } from '../lib/pricing'
@@ -55,7 +56,7 @@ const userStateCode = ref('')
 const userStateName = ref('')
 const userMunicipality = ref('')
 
-const { t, categoryText } = useI18n()
+const { t, categoryText, lang } = useI18n()
 
 const title = computed(() =>
   props.role === 'pro' && !props.professional
@@ -405,7 +406,7 @@ async function handleSave() {
                   v-model:phone-country="phoneCountry"
                 />
               </div>
-              <div>
+              <div v-if="isBrazilMarket(lang)">
                 <label class="block text-xs font-bold text-slate-300 mb-1.5">{{ t('profile.pixKey') }}</label>
                 <input
                   v-model="pixKey"
