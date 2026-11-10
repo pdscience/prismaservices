@@ -1,24 +1,28 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import { statusSteps, clientStatusGroup } from '../../lib/requestStatus'
-import { buildContactLink, isBrazilMarket } from '../../lib/contact'
 import { useAuth } from '../../composables/useAuth'
 import { useNavigation } from '../../composables/useNavigation'
 import { useRequests } from '../../composables/useRequests'
 import { useProfessionals } from '../../composables/useProfessionals'
-import { usePlans } from '../../composables/usePlans'
 import { useUi } from '../../composables/useUi'
 import { useI18n } from '../../composables/useI18n'
 import ClientSubTabs from '../../components/layout/ClientSubTabs.vue'
 import { Calendar, Clock, FileText, MapPin, MessageSquare, Star, User } from 'lucide-vue-next'
 
-const { t, categoryText, statusText, lang } = useI18n()
+const { t, statusText } = useI18n()
 
+const router = useRouter()
 const { userMode } = useAuth()
 const { activeTab, goToTab } = useNavigation()
 const { myRequests, filteredClientRequests, clientStatusFilter } = useRequests()
 const { findProfessional } = useProfessionals()
-const { hasFeature } = usePlans()
+
 const { viewReceiptModal, rateOrderModal, ratingStars } = useUi()
+
+function openChat(requestId: string): void {
+  void router.push({ name: 'cliente-mensagens', query: { request_id: requestId } })
+}
 </script>
 
 <template>
@@ -161,17 +165,15 @@ const { viewReceiptModal, rateOrderModal, ratingStars } = useUi()
               </div>
 
               <div class="md:col-span-3 space-y-2 flex flex-col justify-center">
-                <!-- CONTACT ACTION BUTTON (WhatsApp no Brasil, SMS nos EUA) -->
-                <a
-                  v-if="hasFeature('whatsappVisible')"
-                  :href="buildContactLink(findProfessional(req.professional_id)?.phone || '', t('clientRequests.waConfirm', { name: findProfessional(req.professional_id)?.name || t('common.prestador'), id: req.id, category: categoryText(req.category) }), lang)"
-                  :target="isBrazilMarket(lang) ? '_blank' : undefined"
-                  rel="noopener noreferrer"
-                  class="w-full py-2 px-3 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition-all flex items-center justify-center gap-1.5"
+                <!-- BOTÃO CONVERSAR -->
+                <button
+                  v-if="req.professional_id"
+                  @click="openChat(req.id)"
+                  class="w-full py-2 px-3 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs hover:bg-emerald-400 transition-all flex items-center justify-center gap-1.5"
                 >
                   <MessageSquare class="w-4 h-4" />
-                  {{ t('clientRequests.sendWhatsapp') }}
-                </a>
+                  {{ t('chat.conversar') }}
+                </button>
 
                 <!-- RECEIPT BUTTON -->
                 <button

@@ -12,6 +12,7 @@ import ClienteHistoricoView from '../views/client/HistoricoView.vue'
 import PedidosProView from '../views/pro/PedidosProView.vue'
 import FaturamentoView from '../views/pro/FaturamentoView.vue'
 import PerfilProView from '../views/pro/PerfilProView.vue'
+import MensagensView from '../views/chat/MensagensView.vue'
 import ProHistoricoView from '../views/pro/HistoricoView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 
@@ -29,9 +30,11 @@ export const router = createRouter({
     { path: '/profissionais', name: 'profissionais', component: DirectoryView },
     client('cliente-solicitar', SolicitarView, '/cliente/solicitar'),
     client('cliente-pedidos', MeusPedidosView, '/cliente/pedidos'),
+    client('cliente-mensagens', MensagensView, '/cliente/mensagens'),
     client('cliente-recibos', RecibosView, '/cliente/recibos'),
     client('cliente-historico', ClienteHistoricoView, '/cliente/historico'),
     pro('pro-pedidos', PedidosProView, '/pro/pedidos'),
+    pro('pro-mensagens', MensagensView, '/pro/mensagens'),
     pro('pro-faturamento', FaturamentoView, '/pro/faturamento'),
     pro('pro-perfil', PerfilProView, '/pro/perfil'),
     pro('pro-historico', ProHistoricoView, '/pro/historico'),

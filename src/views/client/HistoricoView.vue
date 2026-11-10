@@ -1,27 +1,31 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import { formatRequestDate } from '../../lib/requestStatus'
-import { buildContactLink, isBrazilMarket } from '../../lib/contact'
 import type { ServiceRequest } from '../../types'
 import { useAuth } from '../../composables/useAuth'
 import { useNavigation } from '../../composables/useNavigation'
 import { useRequests } from '../../composables/useRequests'
 import { useProfessionals } from '../../composables/useProfessionals'
-import { usePlans } from '../../composables/usePlans'
 import { useQuoteForm } from '../../composables/useQuoteForm'
 import { useUi } from '../../composables/useUi'
 import { useI18n } from '../../composables/useI18n'
 import ClientSubTabs from '../../components/layout/ClientSubTabs.vue'
 import { History, MessageSquare, Printer, RotateCcw, Star } from 'lucide-vue-next'
 
-const { t, categoryText, statusText, lang } = useI18n()
+const { t, statusText, categoryText } = useI18n()
 
+const router = useRouter()
 const { userMode } = useAuth()
 const { activeTab, goToTab } = useNavigation()
 const { historicClientRequests } = useRequests()
 const { findProfessional } = useProfessionals()
-const { hasFeature } = usePlans()
+
 const { handleChooseProfessional } = useQuoteForm()
 const { viewReceiptModal, rateOrderModal } = useUi()
+
+function openChat(requestId: string): void {
+  void router.push({ name: 'cliente-mensagens', query: { request_id: requestId } })
+}
 
 function handleRehire(req: ServiceRequest): void {
   const pro = findProfessional(req.professional_id)
@@ -118,15 +122,14 @@ function handleRehire(req: ServiceRequest): void {
               >
                 <RotateCcw class="w-3.5 h-3.5" /> {{ t('clientHistory.requestAgain') }}
               </button>
-              <a
-                v-if="findProfessional(req.professional_id) && hasFeature('whatsappVisible')"
-                :href="buildContactLink(findProfessional(req.professional_id)?.phone || '', t('clientHistory.waHire', { name: findProfessional(req.professional_id)?.name ?? t('common.profissional'), category: categoryText(req.category) }), lang)"
-                :target="isBrazilMarket(lang) ? '_blank' : undefined"
-                rel="noopener noreferrer"
-                class="flex-1 py-2 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-500/20 transition-all flex items-center justify-center gap-2"
-              >
-                <MessageSquare class="w-3.5 h-3.5" /> {{ t('pro.contactPhone') }}
-              </a>
+              <!-- BOTÃO CONVERSAR -->
+                <button
+                  v-if="req.professional_id"
+                  @click="openChat(req.id)"
+                  class="flex-1 py-2 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 text-xs font-bold hover:bg-emerald-500/20 transition-all flex items-center justify-center gap-2"
+                >
+                  <MessageSquare class="w-3.5 h-3.5" /> {{ t('chat.conversar') }}
+                </button>
             </div>
           </div>
         </div>

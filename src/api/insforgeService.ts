@@ -434,6 +434,62 @@ export async function getUserByAuthId(authId: string): Promise<User | null> {
   return (data as User) || null
 }
 
+export async function getChatMessages(requestId: string): Promise<ChatMessage[]> {
+  const { data, error } = await insforge.database
+    .from('chat_messages')
+    .select('*')
+    .eq('request_id', requestId)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return (data as ChatMessage[]) || []
+}
+
+export async function sendChatMessage(requestId: string, senderRole: 'client' | 'pro', content: string): Promise<ChatMessage> {
+  const { data, error } = await insforge.database
+    .from('chat_messages')
+    .insert([{ id: crypto.randomUUID(), request_id: requestId, sender_role: senderRole, content }])
+    .select()
+    .single()
+  if (error) throw error
+  return data as ChatMessage
+}
+
+export async function markChatRead(requestId: string, readerId: string): Promise<string> {
+  const now = new Date().toISOString()
+  const { data: updated, error: updError } = await insforge.database
+    .from('chat_reads')
+    .update({ last_read_at: now })
+    .eq('request_id', requestId)
+    .eq('reader_id', readerId)
+    .select()
+  if (updError) throw updError
+  if ((updated ?? []).length > 0) return now
+  const { error: insError } = await insforge.database
+    .from('chat_reads')
+    .insert([{ request_id: requestId, reader_id: readerId, last_read_at: now }])
+  if (insError) throw insError
+  return now
+}
+
+export async function getChatReads(readerId: string): Promise<Record<string, string>> {
+  const { data, error } = await insforge.database
+    .from('chat_reads')
+    .select('request_id, last_read_at')
+    .eq('reader_id', readerId)
+  if (error) throw error
+  const reads: Record<string, string> = {}
+  ;(data ?? []).forEach((r) => { reads[r.request_id] = r.last_read_at ?? '' })
+  return reads
+}
+
+export interface ChatMessage {
+  id: string
+  request_id: string
+  sender_role: 'client' | 'pro'
+  content: string
+  created_at: string
+}
+
 export async function createUserRecord(user: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<User> {
   const { data, error } = await insforge.database
     .from('users')

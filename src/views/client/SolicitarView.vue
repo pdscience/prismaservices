@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { CATEGORIES } from '../../lib/categories'
-import { isBrazilMarket } from '../../lib/contact'
 import { filterProfessionals, paginate } from '../../lib/directoryFilters'
 import { useAuth } from '../../composables/useAuth'
 import { useNavigation } from '../../composables/useNavigation'
@@ -22,7 +22,7 @@ import {
   Camera,
   Check,
   CheckCircle2,
-  ExternalLink,
+  MessageSquare,
   RefreshCw,
   Sparkles,
   Star,
@@ -33,7 +33,8 @@ import {
 } from 'lucide-vue-next'
 
 const { userMode, authUser, userProfile } = useAuth()
-const { t, categoryText, complexityText, planText, lang } = useI18n()
+const { t, categoryText, complexityText, planText } = useI18n()
+const router = useRouter()
 const { activeTab, goToTab } = useNavigation()
 const {
   findProfessional,
@@ -63,6 +64,10 @@ watch(authUser, (user) => {
 function clearOrderSuccess(): void {
   createdOrderSuccess.value = null
   createdOrderWhatsApp.value = ''
+}
+
+function openChat(requestId: string): void {
+  void router.push({ name: 'cliente-mensagens', query: { request_id: requestId } })
 }
 
 function openProfile(pro: Professional): void {
@@ -121,16 +126,14 @@ watch(gridTotalPages, (tp) => {
             </div>
           </div>
           <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-            <a
-              v-if="createdOrderWhatsApp"
-              :href="createdOrderWhatsApp"
-              :target="isBrazilMarket(lang) ? '_blank' : undefined"
-              rel="noopener noreferrer"
-              class="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-green-600 text-white text-xs font-bold hover:bg-green-500 transition-all flex items-center justify-center gap-2"
+            <button
+              v-if="createdOrderSuccess && !createdOrderSuccess.broadcast"
+              @click="openChat(createdOrderSuccess.id)"
+              class="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 text-xs font-bold hover:bg-emerald-400 transition-all flex items-center justify-center gap-2"
             >
-              {{ t('client.openWhatsApp') }}
-              <ExternalLink class="w-4 h-4" />
-            </a>
+              {{ t('chat.conversar') }}
+              <MessageSquare class="w-4 h-4" />
+            </button>
             <button
               @click="goToTab('meus_pedidos'); clearOrderSuccess()"
               class="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-amber-500 text-slate-950 text-xs font-bold hover:bg-amber-400 transition-all shadow-md shadow-amber-500/20 flex items-center justify-center gap-2"

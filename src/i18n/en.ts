@@ -711,4 +711,23 @@ export default {
     referralCopied: 'Referral link copied!',
     referralCopyError: 'Could not copy. Note the code manually.',
   },
+
+  chat: {
+    title: 'Messages',
+    tab: 'Messages',
+    empty: 'No conversations yet',
+    emptyDesc: 'When a professional takes your request, the conversation will appear here.',
+    you: 'You',
+    unread: 'Unread',
+    conversar: 'Chat',
+    send: 'Send',
+    sendError: 'Could not send the message.',
+    loadError: 'Could not load the messages.',
+    back: 'Back',
+    with: 'Chat with {name}',
+    placeholder: 'Write a message...',
+    justNow: 'just now',
+    hoursAgo: '{hours}h ago',
+    yesterday: 'yesterday',
+  },
 }

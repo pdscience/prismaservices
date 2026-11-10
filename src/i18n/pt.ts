@@ -711,4 +711,23 @@ export default {
     referralCopied: 'Link de indicação copiado!',
     referralCopyError: 'Não foi possível copiar. Anote o código manualmente.',
   },
+
+  chat: {
+    title: 'Mensagens',
+    tab: 'Mensagens',
+    empty: 'Nenhuma conversa ainda',
+    emptyDesc: 'Quando um profissional assumir seu pedido, a conversa aparecerá aqui.',
+    you: 'Você',
+    unread: 'Não lidas',
+    conversar: 'Conversar',
+    send: 'Enviar',
+    sendError: 'Não foi possível enviar a mensagem.',
+    loadError: 'Não foi possível carregar as mensagens.',
+    back: 'Voltar',
+    with: 'Conversa com {name}',
+    placeholder: 'Escreva uma mensagem...',
+    justNow: 'agora mesmo',
+    hoursAgo: '{hours}h atrás',
+    yesterday: 'ontem',
+  },
 }
