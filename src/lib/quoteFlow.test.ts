@@ -95,7 +95,7 @@ describe('buildQuotePayload', () => {
     photoUrl: 'x.png',
     notes: 'n',
     aiAnalysis: { summary: 's' },
-    finalPrice: 150,
+    analysisId: 'a1',
     professionalId: 'p1',
     sendMode: 'direct' as const,
   }
@@ -105,6 +105,12 @@ describe('buildQuotePayload', () => {
     expect(p.broadcast).toBe(false)
     expect(p.status).toBe('Pendente')
     expect(p.client_name).toBe('Maria')
+  })
+  it('não grava a estimativa da IA como preço final', () => {
+    expect(buildQuotePayload(base).final_price).toBeNull()
+  })
+  it('vincula a análise de IA ao pedido', () => {
+    expect(buildQuotePayload(base).analysis_id).toBe('a1')
   })
   it('broadcast: professional_id null e broadcast true', () => {
     const p = buildQuotePayload({ ...base, sendMode: 'broadcast' })

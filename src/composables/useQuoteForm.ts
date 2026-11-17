@@ -1,12 +1,16 @@
 import { ref, computed, nextTick } from 'vue'
 import type { AIAnalysis, Professional, ServiceRequest, User } from '../types'
-import { analyzeWithAI, uploadServicePhoto, createServiceRequest } from '../api/insforgeService'
+import { analyzeWithAI, getAnalysis, uploadServicePhoto, createServiceRequest } from '../api/insforgeService'
 import {
   validateQuoteForm,
   buildQuotePayload,
   hasAnalysisInput,
   type SendMode,
 } from '../lib/quoteFlow'
+import { normalizeAnalysis } from '../lib/aiAnalysis'
+import { pollAnalysis } from '../lib/analysisPolling'
+import { CATEGORIES } from '../lib/categories'
+import { trackEvent } from '../lib/analytics'
 import { buildClientPrefill } from '../lib/quotePrefill'
 import { buildContactLink } from '../lib/contact'
 import { useAuth } from './useAuth'
@@ -32,6 +36,10 @@ const latestAiResult = ref<AIAnalysis | null>(null)
 const createdOrderSuccess = ref<ServiceRequest | null>(null)
 const createdOrderWhatsApp = ref<string>('')
 const pendingAnalysis = ref<boolean>(false)
+const analysisId = ref<string | null>(null)
+const isRefining = ref<boolean>(false)
+const analysisTimedOut = ref<boolean>(false)
+let analysisGeneration = 0
 
 const selectedProfessional = ref<Professional | null>(null)
 // Profissionais elegíveis à escolha direta na categoria atual do formulário
@@ -103,8 +111,87 @@ function handlePhotoUpload(e: Event) {
   }
 }
 
-async function handleAnalyzeWithAI() {
+function analysisOptions() {
+  return {
+    fallbackCategory: selectedCategory.value,
+    categories: CATEGORIES.map((c) => c.name),
+  }
+}
+
+function hasUsablePrice(analysis: AIAnalysis): boolean {
+  return analysis.suggestedMinPrice > 0 || analysis.suggestedMaxPrice > 0
+}
+
+function buildFallbackAnalysis(): AIAnalysis {
   const { t, categoryText } = useI18n()
+  const cat = categoryText(selectedCategory.value)
+  return {
+    summary: t('ai.fallbackSummary', { category: cat }),
+    description: t('ai.fallbackDescription', { category: cat }),
+    category: selectedCategory.value,
+    complexity: 'Média',
+    estimatedTime: t('ai.fallbackTime'),
+    materialsNeeded: [t('ai.fallbackMaterial1'), t('ai.fallbackMaterial2')],
+    suggestedMinPrice: 0,
+    suggestedMaxPrice: 0,
+    technicalNotes: '',
+    recommendedAction: 'Custo Direto',
+  }
+}
+
+function withFallbackTexts(analysis: AIAnalysis): AIAnalysis {
+  const fallback = buildFallbackAnalysis()
+  return {
+    ...analysis,
+    summary: fallback.summary,
+    description: fallback.description,
+    estimatedTime: fallback.estimatedTime,
+    materialsNeeded: fallback.materialsNeeded,
+    technicalNotes: '',
+    recommendedAction: fallback.recommendedAction,
+    confidence: undefined,
+    safetyRisk: undefined,
+  }
+}
+
+function cancelAnalysisPolling(): void {
+  analysisGeneration += 1
+  isRefining.value = false
+}
+
+async function runAnalysisPolling(id: string, generation: number): Promise<void> {
+  const result = await pollAnalysis(() => getAnalysis(id))
+  if (generation !== analysisGeneration) return
+
+  isRefining.value = false
+  if (result.status === 'ready') {
+    const normalized = result.analysis
+      ? normalizeAnalysis(result.analysis, analysisOptions())
+      : null
+    if (normalized) {
+      latestAiResult.value = result.fallback ? withFallbackTexts(normalized) : normalized
+      aiFallback.value = result.fallback || !hasUsablePrice(normalized)
+      if (!aiFallback.value) {
+        trackEvent('ai_analysis_ready', { category: normalized.category, mode: 'poll' })
+        aiReadyToast.value = true
+        setTimeout(() => { aiReadyToast.value = false }, 6000)
+      } else {
+        trackEvent('ai_analysis_fallback', { category: normalized.category, status: 'poll' })
+      }
+    } else {
+      aiFallback.value = true
+      trackEvent('ai_analysis_error', { category: selectedCategory.value, status: 'invalid' })
+    }
+    return
+  }
+
+  // error/timeout: mantém a análise preliminar já exibida.
+  analysisTimedOut.value = true
+  trackEvent('ai_analysis_error', { category: selectedCategory.value, status: result.status })
+}
+
+async function handleAnalyzeWithAI() {
+  const { t, lang } = useI18n()
   const { authUser, authRole, authView, authError, showAuth } = useAuth()
   if (!hasAnalysisInput(Boolean(imagePreview.value), notes.value)) {
     pushToast('warning', t('toasts.needPhotoOrNotes'))
@@ -120,42 +207,66 @@ async function handleAnalyzeWithAI() {
   }
   pendingAnalysis.value = false
 
+  const generation = ++analysisGeneration
   isAnalyzing.value = true
   latestAiResult.value = null
+  analysisId.value = null
+  isRefining.value = false
+  analysisTimedOut.value = false
   aiReadyToast.value = false
   aiFallback.value = false
+  trackEvent('ai_analysis_started', {
+    category: selectedCategory.value,
+    hasImage: Boolean(imagePreview.value),
+    lang: lang.value,
+  })
 
   try {
     const res = await analyzeWithAI(
       imagePreview.value?.startsWith('data:') ? imagePreview.value : undefined,
       selectedCategory.value,
-      notes.value
+      notes.value,
+      lang.value,
+      CATEGORIES.map((c) => c.name),
     )
-    latestAiResult.value = res.analysis
-    aiFallback.value = res.status !== 'ready' || !(res.analysis.suggestedMinPrice > 0 || res.analysis.suggestedMaxPrice > 0)
-    // Sem polling: a IA real não cabe nos 30s do proxy de forma confiável;
-    // quando ela responder a tempo (status ready) o resultado já vem completo.
-      aiReadyToast.value = res.status === 'ready' && (res.analysis.suggestedMinPrice > 0 || res.analysis.suggestedMaxPrice > 0)
-    if (aiReadyToast.value) setTimeout(() => { aiReadyToast.value = false }, 6000)
-  } catch (err) {
-    console.error(err)
-    const cat = categoryText(selectedCategory.value)
-    latestAiResult.value = {
-      summary: t('ai.fallbackSummary', { category: cat }),
-      description: t('ai.fallbackDescription', { category: cat }),
-      category: selectedCategory.value,
-      complexity: 'Média',
-      estimatedTime: t('ai.fallbackTime'),
-      materialsNeeded: [t('ai.fallbackMaterial1'), t('ai.fallbackMaterial2')],
-      suggestedMinPrice: 0,
-      suggestedMaxPrice: 0,
-      technicalNotes: '',
-      recommendedAction: t('ai.fallbackAction'),
+    if (generation !== analysisGeneration) return
+
+    analysisId.value = res.analysisId
+    const normalized = res.analysis
+      ? normalizeAnalysis(res.analysis, analysisOptions())
+      : null
+    let analysis = normalized ?? buildFallbackAnalysis()
+    if (res.fallback || !normalized) {
+      analysis = withFallbackTexts(analysis)
+      aiFallback.value = true
     }
+    if (!hasUsablePrice(analysis)) aiFallback.value = true
+    latestAiResult.value = analysis
+    if (aiFallback.value) {
+      trackEvent('ai_analysis_fallback', { category: analysis.category, status: res.status })
+    } else if (res.status === 'ready') {
+      trackEvent('ai_analysis_ready', { category: analysis.category, mode: 'fast' })
+    }
+    aiReadyToast.value = res.status === 'ready' && !aiFallback.value
+    if (aiReadyToast.value) setTimeout(() => { aiReadyToast.value = false }, 6000)
+
+    if (res.status === 'processing' && res.analysisId) {
+      isRefining.value = true
+      void runAnalysisPolling(res.analysisId, generation)
+    }
+  } catch (err) {
+    if (generation !== analysisGeneration) return
+    console.error(err)
+    const rateLimited = (err as { statusCode?: number }).statusCode === 429
+    latestAiResult.value = buildFallbackAnalysis()
     aiFallback.value = true
-    pushToast('warning', t('toasts.aiUnavailable'))
+    trackEvent(rateLimited ? 'ai_analysis_rate_limited' : 'ai_analysis_error', {
+      category: selectedCategory.value,
+      status: 'request',
+    })
+    pushToast('warning', t(rateLimited ? 'toasts.aiRateLimited' : 'toasts.aiUnavailable'))
   } finally {
-    isAnalyzing.value = false
+    if (generation === analysisGeneration) isAnalyzing.value = false
   }
 }
 
@@ -230,7 +341,7 @@ async function handleConfirmOrder() {
       photoUrl,
       notes: notes.value || '',
       aiAnalysis: latestAiResult.value,
-      finalPrice: latestAiResult.value.suggestedMinPrice || null,
+      analysisId: analysisId.value,
       sendMode: sendMode.value,
       professionalId: selectedProfessional.value?.id ?? null,
     })
@@ -270,8 +381,12 @@ async function handleConfirmOrder() {
 }
 
 function resetForm() {
+  cancelAnalysisPolling()
   latestAiResult.value = null
   aiReadyToast.value = false
+  analysisId.value = null
+  isAnalyzing.value = false
+  analysisTimedOut.value = false
   selectedProfessional.value = null
   sendMode.value = null
   formError.value = ''
@@ -294,6 +409,7 @@ export function useQuoteForm() {
     selectedCategory, clientName, clientPhone, clientPhoneCountry, clientAddress, clientCity, clientUf, notes,
     imagePreview, photoFile,
     isAnalyzing, isSubmitting, latestAiResult,
+    isRefining, analysisTimedOut,
     createdOrderSuccess, createdOrderWhatsApp,
     sendMode, formError,
     selectedProfessional,
@@ -302,6 +418,6 @@ export function useQuoteForm() {
     handlePhotoUpload, handleAnalyzeWithAI, handleConfirmOrder,
     handleChooseProfessional, clearProfessionalSelection,
     prefillClientData,
-    resetForm,
+    resetForm, cancelAnalysisPolling,
   }
 }

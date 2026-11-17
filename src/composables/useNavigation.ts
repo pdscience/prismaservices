@@ -5,7 +5,7 @@ import { useI18n } from './useI18n'
 
 export type TabId = 'boas_vindas' | 'profissionais' | 'solicitar' | 'meus_pedidos' | 'recibos_cliente'
   | 'historico_cliente' | 'pedidos_pro' | 'faturamento' | 'perfil_pro' | 'historico_pro'
-  | 'mensagens_cliente' | 'mensagens_pro'
+  | 'mensagens_cliente' | 'mensagens_pro' | 'profissionais_cliente'
 
 const activeTab = ref<TabId>('boas_vindas')
 const isScrolled = ref(false)
@@ -29,6 +29,7 @@ const TAB_PATHS: Record<TabId, string> = {
   pedidos_pro: '/pro/pedidos', faturamento: '/pro/faturamento',
   perfil_pro: '/pro/perfil', historico_pro: '/pro/historico',
   mensagens_cliente: '/cliente/mensagens', mensagens_pro: '/pro/mensagens',
+  profissionais_cliente: '/cliente/profissionais',
 }
 export function tabToPath(tab: TabId): string { return TAB_PATHS[tab] }
 export function pathToTab(path: string): TabId | null {

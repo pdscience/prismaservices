@@ -11,6 +11,9 @@ export interface AIAnalysis {
   suggestedMaxPrice: number
   technicalNotes: string
   recommendedAction: string
+  confidence?: number
+  urgency?: "Baixa" | "Média" | "Alta"
+  safetyRisk?: string
 }
 
 export interface PortfolioItem {
@@ -75,6 +78,7 @@ export interface ServiceRequest {
   photo_url: string
   notes: string
   ai_analysis: AIAnalysis | null
+  analysis_id: string | null
   status: "Pendente" | "Visita Agendada" | "Em Execução" | "Concluído" | "Cancelado"
   professional_id: string | null
   broadcast: boolean

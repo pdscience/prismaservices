@@ -6,6 +6,7 @@ import { registerNavigator, pathToTab, setTab } from '../composables/useNavigati
 import LandingView from '../views/landing/LandingView.vue'
 import DirectoryView from '../views/professionals/DirectoryView.vue'
 import SolicitarView from '../views/client/SolicitarView.vue'
+import ProfissionaisClienteView from '../views/client/ProfissionaisClienteView.vue'
 import MeusPedidosView from '../views/client/MeusPedidosView.vue'
 import RecibosView from '../views/client/RecibosView.vue'
 import ClienteHistoricoView from '../views/client/HistoricoView.vue'
@@ -29,6 +30,7 @@ export const router = createRouter({
     { path: '/', name: 'landing', component: LandingView },
     { path: '/profissionais', name: 'profissionais', component: DirectoryView },
     client('cliente-solicitar', SolicitarView, '/cliente/solicitar'),
+    client('cliente-profissionais', ProfissionaisClienteView, '/cliente/profissionais'),
     client('cliente-pedidos', MeusPedidosView, '/cliente/pedidos'),
     client('cliente-mensagens', MensagensView, '/cliente/mensagens'),
     client('cliente-recibos', RecibosView, '/cliente/recibos'),

@@ -16,6 +16,12 @@ export type ConversionEvent =
   | 'signup_start'
   | 'login_start'
   | 'page_view_landing'
+  | 'ai_analysis_started'
+  | 'ai_analysis_ready'
+  | 'ai_analysis_fallback'
+  | 'ai_analysis_error'
+  | 'ai_analysis_rate_limited'
+  | 'ai_category_applied'
 
 export function trackEvent(event: ConversionEvent, params: Record<string, unknown> = {}) {
   try {

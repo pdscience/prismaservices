@@ -87,7 +87,7 @@ export function buildQuotePayload(args: {
   photoUrl: string
   notes: string
   aiAnalysis: unknown
-  finalPrice: number | null
+  analysisId: string | null
   sendMode: SendMode
   professionalId: string | null
 }): { professional_id: string | null; broadcast: boolean; status: 'Pendente' } & Record<string, unknown> {
@@ -101,11 +101,12 @@ export function buildQuotePayload(args: {
     photo_url: args.photoUrl,
     notes: args.notes,
     ai_analysis: args.aiAnalysis,
+    analysis_id: args.analysisId,
     status: 'Pendente',
     professional_id: direct ? args.professionalId : null,
     broadcast: !direct,
     agendamento: null,
-    final_price: args.finalPrice,
+    final_price: null,
     receipt_issued: false,
     rating: null,
   }

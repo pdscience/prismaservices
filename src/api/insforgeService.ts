@@ -275,11 +275,24 @@ async function fitPayload(dataUrl: string, maxBytes = 500 * 1024): Promise<strin
 
 export interface AnalyzeResponse {
   status: 'ready' | 'processing' | 'error'
-  analysis: AIAnalysis
+  analysis: AIAnalysis | null
   analysisId: string | null
+  fallback?: boolean
 }
 
-export async function analyzeWithAI(imageBase64: string | undefined, category: string, notes: string): Promise<AnalyzeResponse> {
+export interface AnalysisRecord {
+  status: 'processing' | 'working' | 'ready' | 'error'
+  analysis: AIAnalysis | null
+  fallback: boolean
+}
+
+export async function analyzeWithAI(
+  imageBase64: string | undefined,
+  category: string,
+  notes: string,
+  lang: string,
+  categories: string[],
+): Promise<AnalyzeResponse> {
   let payload = imageBase64
   if (payload?.startsWith('data:')) {
     try {
@@ -290,11 +303,31 @@ export async function analyzeWithAI(imageBase64: string | undefined, category: s
     }
   }
   const { data, error } = await insforge.functions.invoke('analyze-service', {
-    body: { imageBase64: payload, category, notes },
+    body: { imageBase64: payload, category, notes, lang, categories },
   })
 
   if (error) throw error
   return data as AnalyzeResponse
+}
+
+export async function getAnalysis(id: string): Promise<AnalysisRecord> {
+  const { data, error } = await insforge.database
+    .from('service_analyses')
+    .select('status, result, fallback')
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  const row = data as {
+    status: AnalysisRecord['status']
+    result: AIAnalysis | null
+    fallback: boolean | null
+  }
+  return {
+    status: row.status,
+    analysis: row.result ?? null,
+    fallback: row.fallback ?? false,
+  }
 }
 
 export async function createPortalSession(

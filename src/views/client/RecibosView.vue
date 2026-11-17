@@ -54,7 +54,7 @@ const { viewReceiptModal } = useUi()
                 {{ t('clientReceipts.responsible') }}: <strong class="text-slate-200">{{ findProfessional(req.professional_id)?.name || proProfile.name }}</strong>
               </p>
               <div class="text-base font-extrabold text-amber-400 pt-1">
-                R$ {{ req.final_price }},00 <span class="text-[10px] text-slate-500 font-normal">({{ t('clientReceipts.amountPaid') }})</span>
+                R$ {{ req.final_price ?? req.ai_analysis?.suggestedMinPrice ?? 0 }},00 <span class="text-[10px] text-slate-500 font-normal">({{ t('clientReceipts.amountPaid') }})</span>
               </div>
             </div>
 

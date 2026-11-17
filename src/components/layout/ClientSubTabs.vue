@@ -3,7 +3,7 @@ import { useNavigation, type TabId } from '../../composables/useNavigation'
 import { useRequests } from '../../composables/useRequests'
 import { useChat } from '../../composables/useChat'
 import { useI18n } from '../../composables/useI18n'
-import { Bot, Clock, FileText, MessageCircle } from 'lucide-vue-next'
+import { Building2, Bot, Clock, FileText, MessageCircle } from 'lucide-vue-next'
 
 defineProps<{ active: TabId }>()
 const { goToTab } = useNavigation()
@@ -15,6 +15,13 @@ const { t } = useI18n()
 <template>
   <!-- CLIENT SUB-TABS -->
   <div class="bg-slate-900 border border-slate-800 rounded-xl p-1 flex items-center gap-1 overflow-x-auto scrollbar-none">
+    <button
+      @click="goToTab('profissionais_cliente')"
+      :class="['px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5', active === 'profissionais_cliente' ? 'bg-slate-800 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/50']"
+    >
+      <Building2 class="w-3.5 h-3.5" />
+      {{ t('nav.profissionais') }}
+    </button>
     <button
       @click="goToTab('solicitar')"
       :class="['px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5', active === 'solicitar' ? 'bg-slate-800 text-amber-400 border border-amber-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-800/50']"

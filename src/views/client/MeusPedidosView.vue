@@ -120,7 +120,7 @@ function openChat(requestId: string): void {
                   {{ statusText(req.status) }}
                 </span>
                 <span class="text-xs font-extrabold text-white bg-slate-950 px-3 py-1 rounded-full border border-slate-800">
-                  R$ {{ req.final_price || req.ai_analysis?.suggestedMinPrice }},00
+                  R$ {{ req.final_price ?? req.ai_analysis?.suggestedMinPrice ?? 0 }},00
                 </span>
               </div>
             </div>
